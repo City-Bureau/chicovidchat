@@ -1,0 +1,13 @@
+{
+  "name": "chicovidchat",
+  "version": "0.1.0",
+  "description": "",
+  "dependencies": {
+    "serverless-dotenv-plugin": "^2.1.1",
+    "serverless-plugin-aws-alerts": "^1.2.4"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4"
+  }
+}

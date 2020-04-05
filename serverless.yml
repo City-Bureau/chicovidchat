@@ -1,0 +1,269 @@
+service: chicovidchat
+
+provider:
+  name: aws
+  runtime: go1.x
+  stage: prod
+  environment:
+    AIRTABLE_KEY: ${env:AIRTABLE_KEY}
+    AIRTABLE_BASE: ${env:AIRTABLE_BASE}
+    AIRTABLE_TABLE: ${env:AIRTABLE_TABLE}
+    AIRTABLE_VIEW: ${env:AIRTABLE_VIEW}
+    S3_BUCKET: ${env:S3_BUCKET}
+    RDS_DB_NAME: ${env:RDS_DB_NAME}
+    RDS_USERNAME: ${env:RDS_USERNAME}
+    RDS_PASSWORD: ${env:RDS_PASSWORD}
+    SNS_EMAIL: ${env:SNS_EMAIL}
+  tags:
+    project: chicovidchat
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "s3:*"
+      Resource:
+        - "arn:aws:s3:::${env:S3_BUCKET}"
+        - "arn:aws:s3:::${env:S3_BUCKET}/*"
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource:
+        - Ref: SNSTopic
+
+package:
+  exclude:
+    - ./**
+  include:
+    - ./bin/**
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-plugin-aws-alerts
+
+custom:
+  topicName: ${self:service}-${self:provider.stage}-events
+  AURORA:
+    DB_NAME: ${env:RDS_DB_NAME}
+    USERNAME: ${env:RDS_USERNAME}
+    PASSWORD: ${env:RDS_PASSWORD}
+    HOST:
+      Fn::GetAtt: [AuroraRDSCluster, Endpoint.Address]
+    PORT:
+      Fn::GetAtt: [AuroraRDSCluster, Endpoint.Port]
+    VPC_CIDR: "10"
+  vpc:
+    securityGroupIds:
+      - Fn::GetAtt: ServerlessVPC.DefaultSecurityGroup
+    subnetIds:
+      - Ref: ServerlessSubnetA
+      - Ref: ServerlessSubnetB
+  alerts:
+    stages:
+      - prod
+    alarms:
+      - functionErrors
+    topics:
+      alarm:
+        topic: ${self:service}-${self:provider.stage}-alerts-alarm
+        notifications:
+          - protocol: email
+            endpoint: ${env:SNS_EMAIL}
+
+functions:
+  migrate:
+    handler: bin/migrate
+    timeout: 120
+    environment:
+      RDS_HOST: ${self:custom.AURORA.HOST}
+    alarms:
+      - functionErrors
+    vpc: ${self:custom.vpc}
+  load_airtable:
+    handler: bin/load_airtable
+    timeout: 300
+    alarms:
+      - functionErrors
+    events:
+      - schedule: rate(30 minutes)
+  scrape_food_banks:
+    handler: bin/scrape_food_banks
+    timeout: 120
+    alarms:
+      - functionErrors
+    events:
+      - schedule: rate(12 hours)
+  handle_twilio:
+    handler: bin/handle_twilio
+    timeout: 300
+    alarms:
+      - functionErrors
+    events:
+      - http:
+          path: api/twilio
+          method: post
+          integration: lambda
+          cors: true
+  send_twilio_sms:
+    # TODO: Set max retries of 2 or 3?
+    handler: bin/send_twilio_sms
+    timeout: 120
+    environment:
+      SNS_TOPIC_ARN:
+        Ref: SNSTopic
+    alarms:
+      - functionErrors
+    events:
+      - sns:
+          arn:
+            Ref: SNSTopic
+          topicName: ${self:custom.topicName}
+          filterPolicy:
+            feed:
+              - send_twilio_sms
+  handle_message:
+    handler: bin/handle_message
+    timeout: 120
+    environment:
+      RDS_HOST: ${self:custom.AURORA.HOST}
+      SNS_TOPIC_ARN:
+        Ref: SNSTopic
+    alarms:
+      - functionErrors
+    vpc: ${self:custom.vpc}
+    events:
+      - sns:
+          arn:
+            Ref: SNSTopic
+          topicName: ${self:custom.topicName}
+          filterPolicy:
+            feed:
+              - handle_received_message
+              - handle_sent_message
+  # TODO: Cron marking older conversations inactive
+
+resources:
+  Resources:
+    ServerlessVPC:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.0.0/16"
+        EnableDnsSupport: true
+        EnableDnsHostnames: true
+        InstanceTenancy: default
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    ServerlessSubnetA:
+      DependsOn: ServerlessVPC
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId:
+          Ref: ServerlessVPC
+        AvailabilityZone: ${self:provider.region}a
+        CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.0.0/24"
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    ServerlessSubnetB:
+      DependsOn: ServerlessVPC
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId:
+          Ref: ServerlessVPC
+        AvailabilityZone: ${self:provider.region}b
+        CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.1.0/24"
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    ServerlessRouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:
+          Ref: ServerlessVPC
+    ServerlessSubnetARouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId:
+          Ref: ServerlessSubnetA
+        RouteTableId:
+          Ref: ServerlessRouteTable
+    ServerlessSubnetBRouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId:
+          Ref: ServerlessSubnetB
+        RouteTableId:
+          Ref: ServerlessRouteTable
+    # TODO: Create S3 Bucket?
+    S3Endpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Principal: "*"
+              Action:
+                - "s3:*"
+              Resource:
+                - "*"
+        RouteTableIds:
+          - Ref: ServerlessRouteTable
+        ServiceName: "com.amazonaws.${self:provider.region}.s3"
+        VpcId:
+          Ref: ServerlessVPC
+    SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-events
+        DisplayName: ChiCOVIDChatEvents
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    SNSVPCEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      DependsOn: SNSTopic
+      Properties:
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal: "*"
+              Action:
+                - "sns:*"
+              Resource: "*"
+        ServiceName: "com.amazonaws.${self:provider.region}.sns"
+        PrivateDnsEnabled: true
+        VpcEndpointType: Interface
+        SecurityGroupIds:
+          - Fn::GetAtt: ServerlessVPC.DefaultSecurityGroup
+        SubnetIds:
+          - Ref: ServerlessSubnetA
+          - Ref: ServerlessSubnetB
+        VpcId:
+          Ref: ServerlessVPC
+    AuroraSubnetGroup:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties:
+        DBSubnetGroupDescription: "Aurora Subnet Group"
+        SubnetIds:
+          - Ref: ServerlessSubnetA
+          - Ref: ServerlessSubnetB
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    AuroraRDSCluster:
+      Type: "AWS::RDS::DBCluster"
+      Properties:
+        MasterUsername: ${self:custom.AURORA.USERNAME}
+        MasterUserPassword: ${self:custom.AURORA.PASSWORD}
+        DBSubnetGroupName:
+          Ref: AuroraSubnetGroup
+        Engine: aurora-postgresql
+        EngineMode: serverless
+        DatabaseName: ${self:custom.AURORA.DB_NAME}
+        BackupRetentionPeriod: 3
+        VpcSecurityGroupIds:
+          - Fn::GetAtt: ServerlessVPC.DefaultSecurityGroup
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}

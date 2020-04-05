@@ -1,0 +1,42 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - master
+
+env:
+  RDS_DB_NAME: ${{ secrets.RDS_DB_NAME }}
+  RDS_USERNAME: ${{ secrets.RDS_USERNAME }}
+  RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+  SNS_EMAIL: ${{ secrets.SNS_EMAIL }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.14
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "10.x"
+
+      - run: make format
+
+      - uses: actions-contrib/golangci-lint@v1
+
+      - run: make test
+
+      - run: make build
+
+      - run: npm install -g serverless
+
+      - run: npm install
+      # - run: make deploy
