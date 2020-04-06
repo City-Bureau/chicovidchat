@@ -40,7 +40,7 @@ func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]st
 	// TODO: Who should include non-restricted as well as specifically filtered for to reduce redoing
 	whoMatches := f.Who == nil || stringSlicesOverlap(f.Who, resource.Who)
 	langMatches := f.Languages == nil || stringSlicesOverlap(f.Languages, resource.Languages)
-	return whatMatches || whoMatches || langMatches || zipMatches
+	return whatMatches && whoMatches && langMatches && zipMatches
 }
 
 func stringSlicesOverlap(sliceA []string, sliceB []string) bool {

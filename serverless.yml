@@ -38,6 +38,7 @@ package:
     - ./**
   include:
     - ./bin/**
+    - ./i18n/**
 
 plugins:
   - serverless-dotenv-plugin

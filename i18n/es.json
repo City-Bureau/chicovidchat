@@ -1,0 +1,18 @@
+{
+  "language-prompt": "Please select your language",
+  "what-prompt": "What kind of resource are you looking for?",
+  "who-prompt": "Please select all the categories that apply to you",
+  "zip-prompt": "Please enter your ZIP code",
+  "enter-all-numbers": "Reply with all numbers you're looking for in one message",
+  "please-enter-valid-option": "Please enter one of the options",
+  "please-enter-valid-zip": "Please enter a valid ZIP code",
+  "no-results": "No results available",
+  "results-available": {
+    "one": "{{.PluralCount}} result available",
+    "other": "{{.PluralCount}} results available"
+  },
+  "see-more-prompt": "Reply 1 to see more results",
+  "option-en": "Press {{.Number}} for English",
+  "option-es": "Oprime {{.Number}} para Espanol",
+  "All": "All"
+}
