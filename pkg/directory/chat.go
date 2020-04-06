@@ -1,6 +1,8 @@
 package directory
 
 import (
+	"strings"
+
 	"github.com/City-Bureau/chicovidchat/pkg/chat"
 )
 
@@ -60,50 +62,80 @@ func NewDirectoryChat(id string) *DirectoryChat {
 	}
 }
 
+// TODO: Handle sending multiple messages?
+
 // HandleMessage updates chat state based on message
-func (c *DirectoryChat) HandleMessage(message chat.Message) (chat.Message, error) {
-	var reply chat.Message
-	var body string
+func (c *DirectoryChat) HandleMessage(message chat.Message) ([]chat.Message, error) {
+	var replies []chat.Message
+	var bodies []string
 	var err error
 	switch c.State {
 	case setLanguage:
-		body, err = c.handleSetLanguage(message.Body)
+		bodies, err = c.handleSetLanguage(message.Body)
 	case setWhat:
-		body, err = c.handleSetWhat(message.Body)
+		bodies, err = c.handleSetWhat(message.Body)
 	case setWho:
-		body, err = c.handleSetWho(message.Body)
+		bodies, err = c.handleSetWho(message.Body)
 	case setZIP:
-		body, err = c.handleSetZIP(message.Body)
+		bodies, err = c.handleSetZIP(message.Body)
 	case results:
-		body, err = c.handleResults(message.Body)
+		bodies, err = c.handleResults(message.Body)
 	}
-	if body != "" {
-		reply = chat.Message{
-			Sender:    "",
-			Recipient: message.Sender,
-			Body:      body,
+	if len(bodies) > 0 {
+		for _, body := range bodies {
+			replies = append(replies, chat.Message{
+				Sender:    "",
+				Recipient: message.Sender,
+				Body:      body,
+			})
 		}
-		// reply = chat.NewMessage("", message.Sender, body, nil)
 	}
-	return reply, err
+	return replies, err
 }
 
-func (c *DirectoryChat) handleSetLanguage(body string) (string, error) {
-	return "", nil
+func (c *DirectoryChat) handleSetLanguage(body string) ([]string, error) {
+	langOptions := languageOptions()
+	for k, v := range langOptions {
+		if strings.Contains(body, k) {
+			c.Language = v
+		}
+	}
+	return []string{"Message for what"}, nil
 }
 
-func (c *DirectoryChat) handleSetWhat(body string) (string, error) {
-	return "", nil
+func (c *DirectoryChat) handleSetWhat(body string) ([]string, error) {
+	return []string{""}, nil
 }
 
-func (c *DirectoryChat) handleSetWho(body string) (string, error) {
-	return "", nil
+func (c *DirectoryChat) handleSetWho(body string) ([]string, error) {
+	return []string{""}, nil
 }
 
-func (c *DirectoryChat) handleSetZIP(body string) (string, error) {
-	return "", nil
+func (c *DirectoryChat) handleSetZIP(body string) ([]string, error) {
+	return []string{""}, nil
 }
 
-func (c *DirectoryChat) handleResults(body string) (string, error) {
-	return "", nil
+func (c *DirectoryChat) handleResults(body string) ([]string, error) {
+	var results []Resource
+	var replies []string
+	zipMap := ZIPCodeMap()
+	resources, err := LoadResources()
+	if err != nil {
+		return replies, err
+	}
+	for _, resource := range resources {
+		if c.Params.MatchesFilters(resource, &zipMap) {
+			results = append(results, resource)
+		}
+	}
+	if len(results) == 0 {
+		return []string{"No results available"}, nil
+	}
+
+	// var resources []Resource
+	// for _, resource := range
+	// if c.Page == 0 {
+
+	// }
+	return []string{""}, nil
 }

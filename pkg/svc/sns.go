@@ -27,7 +27,8 @@ type SNSClient struct {
 
 // NewSNSClient creates an SNSClient object
 func NewSNSClient() *SNSClient {
-	client := sns.New(session.New())
+	sess, _ := session.NewSession()
+	client := sns.New(sess)
 	return &SNSClient{Client: client}
 }
 

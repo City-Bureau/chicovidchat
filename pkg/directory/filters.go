@@ -1,6 +1,9 @@
 package directory
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // FilterParams represent all categories a user can filter in a chat by
 type FilterParams struct {
@@ -15,19 +18,29 @@ func (f *FilterParams) isEmpty() bool {
 }
 
 // MatchesFilters determines whether a resource matches filter parameters
-func (f *FilterParams) MatchesFilters(resource Resource) bool {
+func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]string) bool {
 	// If filters are empty, return true
 	if f.isEmpty() {
 		return true
 	}
+	zipMatches := false
+	if f.ZIP != nil {
+		zipRe := regexp.MustCompile(`\D`)
+		zipStr := zipRe.ReplaceAllString(*f.ZIP, ``)
+		if zipMap != nil {
+			if zipMatchList, ok := (*zipMap)[zipStr]; ok {
+				zipMatches = stringSlicesOverlap([]string{zipStr}, zipMatchList)
+			}
+		} else {
+			zipMatches = strings.Contains(resource.ZIP, zipStr)
+		}
+	}
 
-	// TODO: Figure out logic here
 	return (stringSlicesOverlap(f.What, resource.Category)) ||
 		// TODO: Who should include non-restricted as well as specifically filtered for to reduce redoing
 		(stringSlicesOverlap(f.Who, resource.Who)) ||
 		(stringSlicesOverlap(f.Languages, resource.Languages)) ||
-		(f.ZIP != nil && strings.Contains(resource.ZIP, (*f.ZIP)))
-
+		(zipMatches)
 }
 
 func stringSlicesOverlap(sliceA []string, sliceB []string) bool {

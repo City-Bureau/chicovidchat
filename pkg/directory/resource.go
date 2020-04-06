@@ -163,8 +163,6 @@ func LoadAirtableResources(base, table, key string) ([]Resource, error) {
 	return resources, nil
 }
 
-// TODO: Function for comparing?
-
 // SyncAirtableResources takes a slice of resources and updates or creates them based on ExternalID
 func SyncAirtableResources(resources []Resource, base, table, key string) error {
 	var recordIDMap map[string]airtableRecord
@@ -182,21 +180,18 @@ func SyncAirtableResources(resources []Resource, base, table, key string) error 
 	for _, r := range resources {
 		// TODO: Make sure fields aren't dropped (modify?)
 		if updateRec, ok := recordIDMap[r.ExternalID]; ok {
-			log.Println(updateRec.Fields.Name)
 			changed := updateRec.Fields.updateChangedFields(r)
 			if changed {
-				// updateErr := createOrUpdateAirtableResource(updateRec.Fields, &updateRec.ID, base, table, key)
-				// if updateErr != nil {
-				// 	return updateErr
-				// }
+				updateErr := createOrUpdateAirtableResource(updateRec.Fields, &updateRec.ID, base, table, key)
+				if updateErr != nil {
+					return updateErr
+				}
 			}
 		} else {
-			jbytes, _ := json.Marshal(r)
-			log.Println(string(jbytes))
-			// createErr := createOrUpdateAirtableResource(r, nil, base, table, key)
-			// if createErr != nil {
-			// 	return createErr
-			// }
+			createErr := createOrUpdateAirtableResource(r, nil, base, table, key)
+			if createErr != nil {
+				return createErr
+			}
 		}
 	}
 	log.Println(len(records))
@@ -206,7 +201,7 @@ func SyncAirtableResources(resources []Resource, base, table, key string) error 
 // LoadResources pulls the latest resource items from S3
 func LoadResources() ([]Resource, error) {
 	var resources []Resource
-	sess := session.New()
+	sess, _ := session.NewSession()
 	svc := s3.New(sess)
 
 	results, err := svc.GetObject(&s3.GetObjectInput{
@@ -236,7 +231,7 @@ func createOrUpdateAirtableResource(resource Resource, id *string, base, table, 
 	reqURL := fmt.Sprintf("https://api.airtable.com/v0/%s/%s", base, table)
 	if id != nil {
 		method = "PATCH"
-		reqURL = fmt.Sprintf("%s/%s", reqURL, id)
+		reqURL = fmt.Sprintf("%s/%s", reqURL, *id)
 	}
 	// TODO: Include body/fields
 	client := &http.Client{}

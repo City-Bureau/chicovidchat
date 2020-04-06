@@ -28,7 +28,7 @@ func handler(request events.CloudWatchEvent) error {
 		return err
 	}
 
-	client := session.New()
+	client, _ := session.NewSession()
 	_, err = s3.New(client).PutObject(&s3.PutObjectInput{
 		Bucket:      aws.String(os.Getenv("S3_BUCKET")),
 		Key:         aws.String("latest.json"),
