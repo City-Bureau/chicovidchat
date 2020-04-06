@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 // TODO: Figure out how i18n is incorporated
@@ -42,11 +44,52 @@ type Resource struct {
 	Created       *time.Time `json:"Created,omitempty"`
 }
 
-// TODO: Should incorporate i18n
-
 // AsText should return a resource as it should display for a chat message
-func (r *Resource) AsText() string {
-	return ""
+func (r *Resource) AsText(localizer *i18n.Localizer) string {
+	resourceStr := r.Name
+	if r.Category != nil && len(r.Category) > 0 {
+		resourceStr += "\n"
+		resourceStr += translateSlice(r.Category, localizer)
+	}
+	if r.Who != nil && len(r.Who) > 0 {
+		resourceStr += "\n"
+		resourceStr += translateSlice(r.Who, localizer)
+	}
+	if r.Languages != nil && len(r.Languages) > 0 {
+		resourceStr += "\n"
+		resourceStr += translateSlice(r.Languages, localizer)
+	}
+	// TODO: Pull in translated descriptions
+	if r.Description != "" {
+		resourceStr += fmt.Sprintf("\n%s", r.Description)
+	}
+	if r.Hours != "" {
+		// TODO: Translate here?
+		resourceStr += fmt.Sprintf("\n%s", r.Hours)
+	}
+	if r.Phone != "" {
+		resourceStr += fmt.Sprintf("\n%s", r.Phone)
+	}
+	if r.Address != "" {
+		resourceStr += fmt.Sprintf("\n%s", r.Address)
+	}
+	if r.Link != "" {
+		resourceStr += fmt.Sprintf("\n%s", r.Link)
+	}
+	if r.Email != "" {
+		resourceStr += fmt.Sprintf("\n%s", r.Email)
+	}
+	return resourceStr
+}
+
+func translateSlice(items []string, localizer *i18n.Localizer) string {
+	translatedItems := []string{}
+	for _, item := range items {
+		translatedItems = append(translatedItems, localizer.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{ID: item, Other: item},
+		}))
+	}
+	return strings.Join(translatedItems, ", ")
 }
 
 func (r *Resource) updateChangedFields(resource Resource) bool {
