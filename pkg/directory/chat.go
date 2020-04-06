@@ -1,7 +1,11 @@
 package directory
 
 import (
+	"encoding/json"
 	"strings"
+
+	"github.com/jinzhu/gorm"
+	"github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/City-Bureau/chicovidchat/pkg/chat"
 )
@@ -22,6 +26,42 @@ type DirectoryChat struct {
 	State  chatState     `json:"state"`
 	Params *FilterParams `json:"params"`
 	Page   uint          `json:"page"`
+}
+
+// NewDirectoryChat is a constructor for DirectoryChat structs
+func NewDirectoryChat(id string) *DirectoryChat {
+	return &DirectoryChat{
+		Chat: chat.Chat{
+			ContactID: id,
+			Active:    true,
+			Category:  "directory",
+			Language:  "",
+		},
+		State:  setLanguage,
+		Params: &FilterParams{},
+		Page:   0,
+	}
+}
+
+func GetOrCreateConversationFromMessage(message chat.Message, db *gorm.DB) (*chat.Conversation, bool) {
+	var conversation chat.Conversation
+	if db.Where("data ->> 'id' = ? AND (data ->> 'active')::boolean IS TRUE", message.Sender).Take(&conversation).RecordNotFound() {
+		directoryChat := NewDirectoryChat(message.Sender)
+		directoryChat.Messages = []chat.Message{message}
+		_ = UpdateDirectoryChatConversation(directoryChat, &conversation, db)
+		return &conversation, true
+	}
+	return &conversation, false
+}
+
+func UpdateDirectoryChatConversation(directoryChat *DirectoryChat, conversation *chat.Conversation, db *gorm.DB) error {
+	chatJSON, _ := json.Marshal(directoryChat)
+	conversation.Data = postgres.Jsonb{
+		RawMessage: json.RawMessage(chatJSON),
+	}
+
+	db.Save(conversation)
+	return nil
 }
 
 func languageOptions() map[string]string {
@@ -46,23 +86,6 @@ func whoOptions() map[string]string {
 		"2": "LGBTQI",
 	}
 }
-
-// NewDirectoryChat is a constructor for DirectoryChat structs
-func NewDirectoryChat(id string) *DirectoryChat {
-	return &DirectoryChat{
-		Chat: chat.Chat{
-			ContactID: id,
-			Active:    true,
-			Category:  "directory",
-			Language:  "",
-		},
-		State:  setLanguage,
-		Params: &FilterParams{},
-		Page:   0,
-	}
-}
-
-// TODO: Handle sending multiple messages?
 
 // HandleMessage updates chat state based on message
 func (c *DirectoryChat) HandleMessage(message chat.Message) ([]chat.Message, error) {

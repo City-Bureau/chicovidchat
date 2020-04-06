@@ -9,7 +9,7 @@ import (
 type FilterParams struct {
 	What      []string `json:"what"`
 	Who       []string `json:"who"`
-	Languages []string `json:"Languages"`
+	Languages []string `json:"languages"`
 	ZIP       *string  `json:"zip"`
 }
 

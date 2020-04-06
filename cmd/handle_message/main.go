@@ -9,33 +9,12 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jinzhu/gorm"
-	"github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/City-Bureau/chicovidchat/pkg/chat"
 	"github.com/City-Bureau/chicovidchat/pkg/directory"
 	"github.com/City-Bureau/chicovidchat/pkg/svc"
 )
-
-func getOrCreateConversationFromMessage(message chat.Message, db *gorm.DB) (*chat.Conversation, bool) {
-	var conversation chat.Conversation
-	if db.Where("data ->> 'id' = ? AND (data ->> 'active')::boolean IS TRUE", message.Sender).Take(&conversation).RecordNotFound() {
-		chat := directory.NewDirectoryChat(message.Sender)
-		_ = updateConversationChat(chat, &conversation, db)
-		return &conversation, true
-	}
-	return &conversation, false
-}
-
-func updateConversationChat(directoryChat *directory.DirectoryChat, conversation *chat.Conversation, db *gorm.DB) error {
-	chatJSON, _ := json.Marshal(directoryChat)
-	conversation.Data = postgres.Jsonb{
-		RawMessage: json.RawMessage(chatJSON),
-	}
-
-	db.Save(conversation)
-	return nil
-}
 
 func handleReceivedMessage(message chat.Message, conversation *chat.Conversation, db *gorm.DB) ([]chat.Message, error) {
 	var directoryChat directory.DirectoryChat
@@ -47,7 +26,7 @@ func handleReceivedMessage(message chat.Message, conversation *chat.Conversation
 	if replyErr != nil {
 		return []chat.Message{}, replyErr
 	}
-	updateErr := updateConversationChat(&directoryChat, conversation, db)
+	updateErr := directory.UpdateDirectoryChatConversation(&directoryChat, conversation, db)
 	if updateErr != nil {
 		return []chat.Message{}, updateErr
 	}
@@ -66,7 +45,7 @@ func handleSentMessage(message chat.Message, conversation *chat.Conversation, db
 		directoryChat.Messages = append(directoryChat.Messages, message)
 	}
 
-	return updateConversationChat(&directoryChat, conversation, db)
+	return directory.UpdateDirectoryChatConversation(&directoryChat, conversation, db)
 }
 
 func handler(request events.SNSEvent) error {
@@ -87,7 +66,7 @@ func handler(request events.SNSEvent) error {
 		os.Getenv("RDS_HOST"),
 		os.Getenv("RDS_DB_NAME"),
 	))
-	conversation, _ := getOrCreateConversationFromMessage(message, db)
+	conversation, _ := directory.GetOrCreateConversationFromMessage(message, db)
 	snsClient := svc.NewSNSClient()
 
 	if feed, ok := snsRecord.MessageAttributes["feed"]; ok {

@@ -19,13 +19,18 @@ func handler(request events.CloudWatchEvent) error {
 
 	resources, scraperErr := scrapers.ScrapeFoodBanks(response.Body)
 	if scraperErr != nil {
-		panic(scraperErr)
+		return scraperErr
 	}
 
 	airtableBase := os.Getenv("AIRTABLE_BASE")
 	airtableTable := os.Getenv("AIRTABLE_TABLE")
 	airtableKey := os.Getenv("AIRTABLE_KEY")
-	return directory.SyncAirtableResources(resources, airtableBase, airtableTable, airtableKey)
+	return directory.SyncAirtableResources(
+		resources,
+		airtableBase,
+		airtableTable,
+		airtableKey,
+	)
 }
 
 func main() {

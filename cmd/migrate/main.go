@@ -13,13 +13,17 @@ import (
 )
 
 func handler(request events.CloudWatchEvent) error {
-	db, _ := gorm.Open("postgres", fmt.Sprintf(
-		"%s:%s@tcp(%s:5432)/%s",
-		os.Getenv("RDS_USERNAME"),
-		os.Getenv("RDS_PASSWORD"),
+	db, err := gorm.Open("postgres", fmt.Sprintf(
+		"host=%s port=%s user=%s dbname=%s password=%s",
 		os.Getenv("RDS_HOST"),
+		os.Getenv("RDS_PORT"),
+		os.Getenv("RDS_USERNAME"),
 		os.Getenv("RDS_DB_NAME"),
+		os.Getenv("RDS_PASSWORD"),
 	))
+	if err != nil {
+		return err
+	}
 	// db.DropTable(&chat.Conversation{})
 	db.AutoMigrate(&chat.Conversation{})
 	defer db.Close()

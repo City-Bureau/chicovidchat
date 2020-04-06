@@ -47,13 +47,14 @@ func handler(request events.SNSEvent) error {
 		return err
 	}
 
-	client := gotwilio.NewTwilioClient(os.Getenv("TWILIO_KEY"), os.Getenv("TWILIO_KEY"))
+	client := gotwilio.NewTwilioClient(
+		os.Getenv("TWILIO_ACCOUNT_SID"),
+		os.Getenv("TWILIO_AUTH_TOKEN"),
+	)
 	twilioChat := svc.NewTwilioChat(
 		client,
 		os.Getenv("TWILIO_FROM"),
 		messages[0].Recipient,
-		os.Getenv("STATUS_CALLBACK"),
-		os.Getenv("APPLICATION_SID"),
 	)
 	snsClient := svc.NewSNSClient()
 

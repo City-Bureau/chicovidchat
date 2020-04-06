@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -22,6 +23,23 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		return events.APIGatewayProxyResponse{}, err
 	}
 
+	client := gotwilio.NewTwilioClient(
+		os.Getenv("TWILIO_ACCOUNT_SID"),
+		os.Getenv("TWILIO_AUTH_TOKEN"),
+	)
+	twilioChat := svc.NewTwilioChat(client, os.Getenv("TWILIO_FROM"), "")
+	isValid, signatureErr := twilioChat.CheckSignature(
+		request.Path,
+		request.Headers["X-Twilio-Signature"],
+		values,
+	)
+	if signatureErr != nil {
+		return events.APIGatewayProxyResponse{}, signatureErr
+	}
+	if !isValid {
+		return events.APIGatewayProxyResponse{}, fmt.Errorf("Twilio signature is not valid")
+	}
+
 	var smsWebhook gotwilio.SMSWebhook
 	err = gotwilio.DecodeWebhook(values, &smsWebhook)
 	if err != nil {
@@ -31,7 +49,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	snsClient := svc.NewSNSClient()
 	createdAt := time.Now()
 	message := chat.Message{
-		ID:        smsWebhook.MessageSid, // TODO: Is it this or SmsSid
+		ID:        smsWebhook.MessageSid,
 		Sender:    smsWebhook.From,
 		Recipient: smsWebhook.To,
 		Body:      smsWebhook.Body,
@@ -39,6 +57,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	}
 	messageJSON, _ := json.Marshal(message)
 	log.Println(string(messageJSON))
+
 	err = snsClient.Publish(string(messageJSON), os.Getenv("SNS_TOPIC_ARN"), svc.ReceivedMessageFeed)
 	if err != nil {
 		return events.APIGatewayProxyResponse{}, err
