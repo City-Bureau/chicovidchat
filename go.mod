@@ -3,6 +3,7 @@ module github.com/City-Bureau/chicovidchat
 go 1.14
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/aws/aws-lambda-go v1.16.0
 	github.com/aws/aws-sdk-go v1.30.3

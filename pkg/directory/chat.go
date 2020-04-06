@@ -150,7 +150,6 @@ func (c *DirectoryChat) handleSetLanguage(body string) ([]string, error) {
 		}
 	}
 	if c.Language == "" {
-		// TODO: currently just redoing?
 		return c.buildLanguageMessage(), nil
 	}
 	c.State = setWhat
@@ -183,7 +182,6 @@ func (c *DirectoryChat) handleSetWhat(body string) ([]string, error) {
 				c.State = setWho
 				return c.buildWhoMessage(), nil
 			}
-			// TODO: Will need to be correct value for filtering
 			c.Params.What = append(c.Params.What, val)
 		}
 	}
@@ -222,7 +220,6 @@ func (c *DirectoryChat) handleSetWho(body string) ([]string, error) {
 				c.State = setZIP
 				return c.buildZIPMessage(), nil
 			}
-			// TODO: Will need to be correct value for filtering
 			c.Params.Who = append(c.Params.Who, val)
 		}
 	}
@@ -291,8 +288,14 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	}
 
 	bodyStr := ""
-	// TODO: Figure out handling when someone is past limit
-	sendResults, hasRemaining := paginateResults(results, c.Page)
+
+	sendResults, hasRemaining := PaginateResults(results, c.Page)
+	// Skip if past pagination limits
+	// TODO: Maybe ask if they want to start again?
+	if len(sendResults) == 0 {
+		return []string{}, nil
+	}
+
 	if c.Page == 0 {
 		resultsStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID:   "results-available",
@@ -301,7 +304,7 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 		bodyStr += fmt.Sprintf("%s\n", resultsStr)
 	}
 	for _, result := range sendResults {
-		bodyStr += fmt.Sprintf("\n%s", result.Name)
+		bodyStr += fmt.Sprintf("\n%s", result.AsText(c.localizer))
 	}
 	if hasRemaining {
 		seeMoreStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -314,10 +317,12 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	return []string{bodyStr}, nil
 }
 
-func paginateResults(resources []Resource, page int) ([]Resource, bool) {
+func PaginateResults(resources []Resource, page int) ([]Resource, bool) {
 	startIdx := page * pageSize
 	endIdx := startIdx + pageSize
-	if endIdx >= len(resources) {
+	if startIdx >= len(resources) {
+		return []Resource{}, false
+	} else if endIdx >= len(resources) {
 		return resources[startIdx:], false
 	} else {
 		return resources[startIdx:endIdx], true
