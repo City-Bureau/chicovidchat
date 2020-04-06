@@ -8,5 +8,5 @@ import (
 // Conversation is the struct for managing database access to Chats
 type Conversation struct {
 	gorm.Model
-	Data postgres.Jsonb
+	Data postgres.Jsonb `json:"data"`
 }

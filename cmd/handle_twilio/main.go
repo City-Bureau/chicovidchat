@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,7 +16,7 @@ import (
 	"github.com/City-Bureau/chicovidchat/pkg/svc"
 )
 
-func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	values, err := url.ParseQuery(request.Body)
 	if err != nil {
 		return events.APIGatewayProxyResponse{}, err
@@ -29,7 +28,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	)
 	twilioChat := svc.NewTwilioChat(client, os.Getenv("TWILIO_FROM"), "")
 	isValid, signatureErr := twilioChat.CheckSignature(
-		request.Path,
+		fmt.Sprintf("%s%s", os.Getenv("GW_ENDPOINT"), request.Path),
 		request.Headers["X-Twilio-Signature"],
 		values,
 	)

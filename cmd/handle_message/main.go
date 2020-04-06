@@ -59,28 +59,36 @@ func handler(request events.SNSEvent) error {
 	if err != nil {
 		return err
 	}
-	db, _ := gorm.Open("postgres", fmt.Sprintf(
-		"%s:%s@tcp(%s:5432)/%s",
-		os.Getenv("RDS_USERNAME"),
-		os.Getenv("RDS_PASSWORD"),
+	db, dbErr := gorm.Open("postgres", fmt.Sprintf(
+		"host=%s port=%s user=%s dbname=%s password=%s",
 		os.Getenv("RDS_HOST"),
+		os.Getenv("RDS_PORT"),
+		os.Getenv("RDS_USERNAME"),
 		os.Getenv("RDS_DB_NAME"),
+		os.Getenv("RDS_PASSWORD"),
 	))
-	conversation, _ := directory.GetOrCreateConversationFromMessage(message, db)
+	if dbErr != nil {
+		return dbErr
+	}
+	defer db.Close()
 	snsClient := svc.NewSNSClient()
 
 	if feed, ok := snsRecord.MessageAttributes["feed"]; ok {
-		if feed == svc.ReceivedMessageFeed {
+		feedMap, _ := feed.(map[string]interface{})
+		feedVal, _ := feedMap["Value"].(string)
+		if feedVal == svc.ReceivedMessageFeed {
+			conversation, _ := directory.GetOrCreateConversationFromMessage(message.Sender, message, db)
 			replies, replyErr := handleReceivedMessage(message, conversation, db)
 			if replyErr != nil {
 				return replyErr
 			}
 			repliesJSON, _ := json.Marshal(replies)
 			return snsClient.Publish(string(repliesJSON), os.Getenv("SNS_TOPIC_ARN"), svc.SendSMSFeed)
-		} else if feed == svc.SentMessageFeed {
+		} else if feedVal == svc.SentMessageFeed {
+			conversation, _ := directory.GetOrCreateConversationFromMessage(message.Recipient, message, db)
 			return handleSentMessage(message, conversation, db)
 		} else {
-			log.Printf("No handler for feed %s", feed)
+			log.Printf("No handler for feed %s", feedVal)
 			return nil
 		}
 	} else {

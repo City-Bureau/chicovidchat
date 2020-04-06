@@ -4,6 +4,7 @@ provider:
   name: aws
   runtime: go1.x
   stage: prod
+  region: us-east-2
   environment:
     AIRTABLE_KEY: ${env:AIRTABLE_KEY}
     AIRTABLE_BASE: ${env:AIRTABLE_BASE}
@@ -14,8 +15,11 @@ provider:
     RDS_USERNAME: ${env:RDS_USERNAME}
     RDS_PASSWORD: ${env:RDS_PASSWORD}
     SNS_EMAIL: ${env:SNS_EMAIL}
+    TWILIO_FROM: ${env:TWILIO_FROM}
+    TWILIO_ACCOUNT_SID: ${env:TWILIO_ACCOUNT_SID}
+    TWILIO_AUTH_TOKEN: ${env:TWILIO_AUTH_TOKEN}
   tags:
-    project: chicovidchat
+    project: chicovidchat-prod
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -74,6 +78,7 @@ functions:
     timeout: 120
     environment:
       RDS_HOST: ${self:custom.AURORA.HOST}
+      RDS_PORT: ${self:custom.AURORA.PORT}
     alarms:
       - functionErrors
     vpc: ${self:custom.vpc}
@@ -89,19 +94,24 @@ functions:
     timeout: 120
     alarms:
       - functionErrors
-    events:
-      - schedule: rate(12 hours)
   handle_twilio:
     handler: bin/handle_twilio
-    timeout: 300
+    timeout: 30
     alarms:
       - functionErrors
+    environment:
+      SNS_TOPIC_ARN:
+        Ref: SNSTopic
+      GW_ENDPOINT:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: "ApiGatewayRestApi"
+            - ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"
     events:
       - http:
           path: api/twilio
           method: post
-          integration: lambda
-          cors: true
   send_twilio_sms:
     # TODO: Set max retries of 2 or 3?
     handler: bin/send_twilio_sms
@@ -197,15 +207,6 @@ resources:
     S3Endpoint:
       Type: AWS::EC2::VPCEndpoint
       Properties:
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Principal: "*"
-              Action:
-                - "s3:*"
-              Resource:
-                - "*"
         RouteTableIds:
           - Ref: ServerlessRouteTable
         ServiceName: "com.amazonaws.${self:provider.region}.s3"
@@ -262,6 +263,10 @@ resources:
         EngineMode: serverless
         DatabaseName: ${self:custom.AURORA.DB_NAME}
         BackupRetentionPeriod: 3
+        ScalingConfiguration:
+          MinCapacity: 2
+          MaxCapacity: 8
+        SourceRegion: ${self:provider.region}
         VpcSecurityGroupIds:
           - Fn::GetAtt: ServerlessVPC.DefaultSecurityGroup
         Tags:
