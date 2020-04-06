@@ -1,7 +1,6 @@
 package directory
 
 import (
-	"regexp"
 	"strings"
 )
 
@@ -23,24 +22,25 @@ func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]st
 	if f.isEmpty() {
 		return true
 	}
+	if resource.Status != "Approved" {
+		return false
+	}
 	zipMatches := false
 	if f.ZIP != nil {
-		zipRe := regexp.MustCompile(`\D`)
-		zipStr := zipRe.ReplaceAllString(*f.ZIP, ``)
 		if zipMap != nil {
-			if zipMatchList, ok := (*zipMap)[zipStr]; ok {
-				zipMatches = stringSlicesOverlap([]string{zipStr}, zipMatchList)
+			if zipMatchList, ok := (*zipMap)[*f.ZIP]; ok {
+				zipMatches = stringSlicesOverlap([]string{*f.ZIP}, zipMatchList)
 			}
 		} else {
-			zipMatches = strings.Contains(resource.ZIP, zipStr)
+			zipMatches = strings.Contains(resource.ZIP, *f.ZIP)
 		}
 	}
 
-	return (stringSlicesOverlap(f.What, resource.Category)) ||
-		// TODO: Who should include non-restricted as well as specifically filtered for to reduce redoing
-		(stringSlicesOverlap(f.Who, resource.Who)) ||
-		(stringSlicesOverlap(f.Languages, resource.Languages)) ||
-		(zipMatches)
+	whatMatches := f.What == nil || stringSlicesOverlap(f.What, resource.Category)
+	// TODO: Who should include non-restricted as well as specifically filtered for to reduce redoing
+	whoMatches := f.Who == nil || stringSlicesOverlap(f.Who, resource.Who)
+	langMatches := f.Languages == nil || stringSlicesOverlap(f.Languages, resource.Languages)
+	return whatMatches || whoMatches || langMatches || zipMatches
 }
 
 func stringSlicesOverlap(sliceA []string, sliceB []string) bool {

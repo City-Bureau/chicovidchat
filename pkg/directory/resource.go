@@ -36,7 +36,7 @@ type Resource struct {
 	Who           []string   `json:"Who,omitempty"`
 	Level         string     `json:"Level"`
 	Type          string     `json:"Type"`
-	Approved      bool       `json:"Approved"`
+	Status        string     `json:"Status"`
 	ExternalID    string     `json:"External ID"`
 	LastUpdated   *time.Time `json:"Last Updated,omitempty"`
 	Created       *time.Time `json:"Created,omitempty"`
