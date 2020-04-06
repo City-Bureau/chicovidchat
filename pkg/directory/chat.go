@@ -72,6 +72,7 @@ func languageOptions() map[string]string {
 }
 
 // Values should be IDs for i18n messages
+// nolint
 func whatOptions() map[string]string {
 	return map[string]string{
 		"1": "Money",
@@ -80,6 +81,7 @@ func whatOptions() map[string]string {
 	}
 }
 
+// nolint
 func whoOptions() map[string]string {
 	return map[string]string{
 		"1": "Artists",
