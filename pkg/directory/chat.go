@@ -42,7 +42,6 @@ func NewDirectoryChat(id string) *DirectoryChat {
 	return &DirectoryChat{
 		Chat: chat.Chat{
 			ContactID: id,
-			Active:    true,
 			Category:  "directory",
 			Language:  "",
 		},
@@ -54,7 +53,7 @@ func NewDirectoryChat(id string) *DirectoryChat {
 
 func GetOrCreateConversationFromMessage(contact string, message chat.Message, db *gorm.DB) (*chat.Conversation, bool) {
 	var conversation chat.Conversation
-	if db.Model(&chat.Conversation{}).Where("data ->> 'id' = ? AND (data ->> 'active')::boolean IS TRUE", contact).Last(&conversation).RecordNotFound() {
+	if db.Model(&chat.Conversation{}).Where("data ->> 'id' = ? AND active IS TRUE", contact).Last(&conversation).RecordNotFound() {
 		directoryChat := NewDirectoryChat(message.Sender)
 		directoryChat.Messages = []chat.Message{message}
 		_ = UpdateDirectoryChatConversation(directoryChat, &conversation, db)

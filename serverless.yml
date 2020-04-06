@@ -149,7 +149,13 @@ functions:
             feed:
               - handle_received_message
               - handle_sent_message
-  # TODO: Cron marking older conversations inactive
+  cleanup_inactive:
+    handler: bin/cleanup_inactive
+    timeout: 300
+    alarms:
+      - functionErrors
+    events:
+      - schedule: rate(12 hours)
 
 resources:
   Resources:
