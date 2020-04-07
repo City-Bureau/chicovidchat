@@ -208,7 +208,7 @@ func LoadAirtableResources(base, table, key string) ([]Resource, error) {
 
 // SyncAirtableResources takes a slice of resources and updates or creates them based on ExternalID
 func SyncAirtableResources(resources []Resource, base, table, key string) error {
-	var recordIDMap map[string]airtableRecord
+	recordIDMap := map[string]airtableRecord{}
 	records, err := loadAirtableRecords(base, table, key)
 	if err != nil {
 		return err

@@ -158,6 +158,7 @@ functions:
       RDS_PORT: ${self:custom.AURORA.PORT}
     alarms:
       - functionErrors
+    vpc: ${self:custom.vpc}
     events:
       - schedule: rate(12 hours)
 
