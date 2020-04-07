@@ -27,7 +27,9 @@ func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]st
 	}
 	zipMatches := false
 	if f.ZIP != nil {
-		if zipMap != nil {
+		if resource.Level != "Neighborhood" {
+			zipMatches = true
+		} else if zipMap != nil {
 			if zipMatchList, ok := (*zipMap)[*f.ZIP]; ok {
 				zipMatches = stringSlicesOverlap([]string{*f.ZIP}, zipMatchList)
 			}
@@ -36,10 +38,10 @@ func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]st
 		}
 	}
 
-	whatMatches := f.What == nil || stringSlicesOverlap(f.What, resource.Category)
+	whatMatches := len(f.What) == 0 || stringSlicesOverlap(f.What, resource.Category)
 	// TODO: Who should include non-restricted as well as specifically filtered for to reduce redoing
-	whoMatches := f.Who == nil || stringSlicesOverlap(f.Who, resource.Who)
-	langMatches := f.Languages == nil || stringSlicesOverlap(f.Languages, resource.Languages)
+	whoMatches := len(f.Who) == 0 || stringSlicesOverlap(f.Who, resource.Who)
+	langMatches := len(f.Languages) == 0 || stringSlicesOverlap(f.Languages, resource.Languages)
 	return whatMatches && whoMatches && langMatches && zipMatches
 }
 

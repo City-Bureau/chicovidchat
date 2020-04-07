@@ -135,6 +135,7 @@ functions:
     timeout: 120
     environment:
       RDS_HOST: ${self:custom.AURORA.HOST}
+      RDS_PORT: ${self:custom.AURORA.PORT}
       SNS_TOPIC_ARN:
         Ref: SNSTopic
     alarms:
@@ -152,6 +153,9 @@ functions:
   cleanup_inactive:
     handler: bin/cleanup_inactive
     timeout: 300
+    environment:
+      RDS_HOST: ${self:custom.AURORA.HOST}
+      RDS_PORT: ${self:custom.AURORA.PORT}
     alarms:
       - functionErrors
     events:

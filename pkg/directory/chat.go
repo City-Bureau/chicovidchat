@@ -304,7 +304,7 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 		bodyStr += fmt.Sprintf("%s\n", resultsStr)
 	}
 	for _, result := range sendResults {
-		bodyStr += fmt.Sprintf("\n%s", result.AsText(c.localizer))
+		bodyStr += fmt.Sprintf("\n\n%s", result.AsText(c.localizer))
 	}
 	if hasRemaining {
 		seeMoreStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{

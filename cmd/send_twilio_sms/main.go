@@ -36,7 +36,7 @@ func SendMessage(message chat.Message, twilioChat *svc.TwilioChat, snsClient *sv
 }
 
 func handler(request events.SNSEvent) error {
-	if len(request.Records) < 0 {
+	if len(request.Records) <= 0 {
 		return nil
 	}
 	message := request.Records[0].SNS.Message
@@ -45,6 +45,10 @@ func handler(request events.SNSEvent) error {
 	err := json.Unmarshal([]byte(message), &messages)
 	if err != nil {
 		return err
+	}
+
+	if len(messages) == 0 {
+		return nil
 	}
 
 	client := gotwilio.NewTwilioClient(
@@ -58,9 +62,7 @@ func handler(request events.SNSEvent) error {
 	)
 	snsClient := svc.NewSNSClient()
 
-	if len(messages) == 0 {
-		return nil
-	} else if len(messages) == 1 {
+	if len(messages) == 1 {
 		return SendMessage(messages[0], twilioChat, snsClient)
 	} else {
 		msgErr := SendMessage(messages[0], twilioChat, snsClient)
