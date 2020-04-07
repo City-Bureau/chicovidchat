@@ -5,6 +5,14 @@ on:
       - master
 
 env:
+  AIRTABLE_BASE: ${{ secrets.AIRTABLE_BASE }}
+  AIRTABLE_KEY: ${{ secrets.AIRTABLE_KEY }}
+  AIRTABLE_TABLE: ${{ secrets.AIRTABLE_TABLE }}
+  AIRTABLE_VIEW: ${{ secrets.AIRTABLE_VIEW }}
+  TWILIO_FROM: ${{ secrets.TWILIO_FROM }}
+  TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+  TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+  S3_BUCKET: city-bureau-chi-covid-chat
   RDS_DB_NAME: ${{ secrets.RDS_DB_NAME }}
   RDS_USERNAME: ${{ secrets.RDS_USERNAME }}
   RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
@@ -43,4 +51,5 @@ jobs:
       - run: npm install -g serverless
 
       - run: npm install
-      # - run: make deploy
+
+      - run: make deploy
