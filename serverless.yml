@@ -90,11 +90,6 @@ functions:
       - functionErrors
     events:
       - schedule: rate(30 minutes)
-  scrape_food_banks:
-    handler: bin/scrape_food_banks
-    timeout: 120
-    alarms:
-      - functionErrors
   handle_twilio:
     handler: bin/handle_twilio
     timeout: 30
