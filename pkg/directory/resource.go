@@ -66,7 +66,7 @@ func (r *Resource) AsText(lang string, localizer *i18n.Localizer) string {
 
 	langDescription := r.descriptionForLang(lang)
 	if langDescription != "" {
-		resourceStr += fmt.Sprintf("\n\n%s\n", langDescription)
+		resourceStr += fmt.Sprintf("\n\n%s\n", strings.TrimSpace(langDescription))
 	}
 	if r.Phone != "" {
 		resourceStr += fmt.Sprintf("\n%s", r.Phone)
