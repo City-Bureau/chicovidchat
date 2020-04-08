@@ -114,7 +114,6 @@ functions:
           path: api/twilio
           method: post
   send_twilio_sms:
-    # TODO: Set max retries of 2 or 3?
     handler: bin/send_twilio_sms
     timeout: 120
     environment:
@@ -215,7 +214,6 @@ resources:
           Ref: ServerlessSubnetB
         RouteTableId:
           Ref: ServerlessRouteTable
-    # TODO: Create S3 Bucket?
     S3Endpoint:
       Type: AWS::EC2::VPCEndpoint
       Properties:

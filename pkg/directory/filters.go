@@ -39,8 +39,8 @@ func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]st
 	}
 
 	whatMatches := len(f.What) == 0 || stringSlicesOverlap(f.What, resource.Category)
-	// TODO: Who should include non-restricted as well as specifically filtered for to reduce redoing
-	whoMatches := len(f.Who) == 0 || stringSlicesOverlap(f.Who, resource.Who)
+	// Includes unrestricted resources in addition to filtered ones
+	whoMatches := len(f.Who) == 0 || len(resource.Who) == 0 || stringSlicesOverlap(f.Who, resource.Who)
 	langMatches := len(f.Languages) == 0 || stringSlicesOverlap(f.Languages, resource.Languages)
 	return whatMatches && whoMatches && langMatches && zipMatches
 }

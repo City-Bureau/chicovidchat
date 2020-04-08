@@ -19,9 +19,6 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-// TODO: Figure out how i18n is incorporated
-// TODO: Setup omitempty, pointers here
-
 // Resource represents one item from the Airtable directory
 type Resource struct {
 	Name          string     `json:"Name"`
@@ -45,7 +42,7 @@ type Resource struct {
 }
 
 // AsText should return a resource as it should display for a chat message
-func (r *Resource) AsText(localizer *i18n.Localizer) string {
+func (r *Resource) AsText(lang string, localizer *i18n.Localizer) string {
 	resourceStr := r.Name
 	if r.Category != nil && len(r.Category) > 0 {
 		resourceStr += "\n"
@@ -59,12 +56,12 @@ func (r *Resource) AsText(localizer *i18n.Localizer) string {
 		resourceStr += "\n"
 		resourceStr += translateSlice(r.Languages, localizer)
 	}
-	// TODO: Pull in translated descriptions
-	if r.Description != "" {
-		resourceStr += fmt.Sprintf("\n%s", r.Description)
+
+	langDescription := r.descriptionForLang(lang)
+	if langDescription != "" {
+		resourceStr += fmt.Sprintf("\n%s", langDescription)
 	}
 	if r.Hours != "" {
-		// TODO: Translate here?
 		resourceStr += fmt.Sprintf("\n%s", r.Hours)
 	}
 	if r.Phone != "" {
@@ -80,6 +77,15 @@ func (r *Resource) AsText(localizer *i18n.Localizer) string {
 		resourceStr += fmt.Sprintf("\n%s", r.Email)
 	}
 	return resourceStr
+}
+
+func (r *Resource) descriptionForLang(lang string) string {
+	switch {
+	case lang == "es" && r.DescriptionES != "":
+		return r.DescriptionES
+	default:
+		return r.Description
+	}
 }
 
 func translateSlice(items []string, localizer *i18n.Localizer) string {

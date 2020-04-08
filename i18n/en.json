@@ -12,6 +12,7 @@
     "other": "{{.PluralCount}} results available"
   },
   "see-more-prompt": "Reply 1 to see more results",
+  "restart-prompt": "Reply 2 to restart",
   "option-en": "Press {{.Number}} for English",
   "option-es": "Oprime {{.Number}} para Espanol",
   "All": "All"

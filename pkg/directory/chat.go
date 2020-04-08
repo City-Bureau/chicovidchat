@@ -259,8 +259,10 @@ func (c *DirectoryChat) handleSetZIP(body string) ([]string, error) {
 func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	var results []Resource
 
-	// If page is not 0 and "1" not in string, ignore
-	if !strings.Contains(body, "1") && c.Page != 0 {
+	if strings.Contains(body, "2") {
+		return c.handleRestart()
+	} else if !strings.Contains(body, "1") && c.Page != 0 {
+		// If page is not 0 and "1" not in string, ignore
 		return []string{}, nil
 	}
 
@@ -278,24 +280,29 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 			results = append(results, resource)
 		}
 	}
+
+	restartPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "restart-prompt",
+	})
 	if len(results) == 0 {
 		// Increment page so that it won't continue to send on replies
 		c.Page++
-		noResults := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		replyStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "no-results",
 		})
-		return []string{noResults}, nil
+		replyStr += fmt.Sprintf("\n%s", restartPrompt)
+		return []string{replyStr}, nil
 	}
 
 	bodyStr := ""
 
 	sendResults, hasRemaining := PaginateResults(results, c.Page)
 	// Skip if past pagination limits
-	// TODO: Maybe ask if they want to start again?
 	if len(sendResults) == 0 {
 		return []string{}, nil
 	}
 
+	// Include results header if first page of results
 	if c.Page == 0 {
 		resultsStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID:   "results-available",
@@ -303,18 +310,34 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 		})
 		bodyStr += fmt.Sprintf("%s\n", resultsStr)
 	}
+
+	// Add result text to the message body
 	for _, result := range sendResults {
-		bodyStr += fmt.Sprintf("\n\n%s", result.AsText(c.localizer))
+		bodyStr += fmt.Sprintf("\n\n%s", result.AsText(c.Language, c.localizer))
 	}
+
+	// Show a prompt for paginating if more results available
 	if hasRemaining {
 		seeMoreStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "see-more-prompt",
 		})
-		bodyStr += fmt.Sprintf("\n\n%s", seeMoreStr)
+		bodyStr += fmt.Sprintf("\n\n%s\n", seeMoreStr)
+	} else {
+		// Add padding for restart prompt if see more prompt not included
+		bodyStr += "\n\n"
 	}
+	bodyStr += restartPrompt
 	c.Page++
 
 	return []string{bodyStr}, nil
+}
+
+// Reset filters, page, go back to setting "what", keep language
+func (c *DirectoryChat) handleRestart() ([]string, error) {
+	c.Params = &FilterParams{}
+	c.State = setWhat
+	c.Page = 0
+	return c.buildWhatMessage(), nil
 }
 
 func PaginateResults(resources []Resource, page int) ([]Resource, bool) {
