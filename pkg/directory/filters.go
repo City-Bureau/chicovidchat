@@ -32,6 +32,8 @@ func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]st
 		} else if zipMap != nil {
 			if zipMatchList, ok := (*zipMap)[*f.ZIP]; ok {
 				zipMatches = stringSlicesOverlap([]string{*f.ZIP}, zipMatchList)
+			} else {
+				zipMatches = strings.Contains(resource.ZIP, *f.ZIP)
 			}
 		} else {
 			zipMatches = strings.Contains(resource.ZIP, *f.ZIP)

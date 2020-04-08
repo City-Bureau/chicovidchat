@@ -43,7 +43,7 @@ func NewDirectoryChat(id string) *DirectoryChat {
 		Chat: chat.Chat{
 			ContactID: id,
 			Category:  "directory",
-			Language:  "",
+			Language:  "en",
 		},
 		State:  started,
 		Params: &FilterParams{},
@@ -128,7 +128,7 @@ func (c *DirectoryChat) handleStarted(body string) ([]string, error) {
 
 func (c *DirectoryChat) buildLanguageMessage() []string {
 	bodyStr := fmt.Sprintf(
-		"%s\n\n%s\n\n",
+		"%s\n\n%s\n",
 		c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "intro-text",
 		}), c.localizer.MustLocalize(&i18n.LocalizeConfig{
