@@ -78,11 +78,11 @@ func languageOptions() []string {
 
 // Values should be IDs for i18n messages
 func whatOptions() []string {
-	return []string{"All", "Money", "Food", "Employment"}
+	return []string{"All", "Money", "Food", "Housing", "Health", "Utilities", "Legal Help"}
 }
 
 func whoOptions() []string {
-	return []string{"All", "LGBTQI", "Artists"}
+	return []string{"All", "Families", "Immigrants", "LGBTQI", "Business Owners", "Students"}
 }
 
 // HandleMessage updates chat state based on message
@@ -127,17 +127,19 @@ func (c *DirectoryChat) handleStarted(body string) ([]string, error) {
 }
 
 func (c *DirectoryChat) buildLanguageMessage() []string {
-	bodyStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "language-prompt",
-	})
-	bodyStr += "\n"
+	bodyStr := fmt.Sprintf(
+		"%s\n\n%s\n\n",
+		c.localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "intro-text",
+		}), c.localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "language-prompt",
+		}),
+	)
 	for idx, val := range languageOptions() {
-		langStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID:    fmt.Sprintf("option-%s", val),
 			TemplateData: map[string]string{"Number": strconv.Itoa(idx)},
-		})
-		bodyStr += "\n"
-		bodyStr += langStr
+		}))
 	}
 	return []string{bodyStr}
 }
@@ -157,17 +159,14 @@ func (c *DirectoryChat) handleSetLanguage(body string) ([]string, error) {
 }
 
 func (c *DirectoryChat) buildWhatMessage() []string {
-	bodyStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+	bodyStr := fmt.Sprintf("%s\n", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "what-prompt",
-	})
-	bodyStr += "\n"
+	}))
 	for idx, val := range whatOptions() {
-		whatOption := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{ID: val, Other: val},
-		})
-		// TODO: Maybe add "Text X for"...
-		bodyStr += fmt.Sprintf("\n%d ", idx)
-		bodyStr += whatOption
+			TemplateData:   map[string]string{"Number": strconv.Itoa(idx)},
+		}))
 	}
 	return []string{bodyStr}
 }
@@ -196,16 +195,14 @@ func (c *DirectoryChat) handleSetWhat(body string) ([]string, error) {
 }
 
 func (c *DirectoryChat) buildWhoMessage() []string {
-	bodyStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+	bodyStr := fmt.Sprintf("%s\n", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "who-prompt",
-	})
-	bodyStr += "\n"
+	}))
 	for idx, val := range whoOptions() {
-		whatOption := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{ID: val, Other: val},
-		})
-		bodyStr += fmt.Sprintf("\n%d ", idx)
-		bodyStr += whatOption
+			TemplateData:   map[string]string{"Number": strconv.Itoa(idx)},
+		}))
 	}
 	return []string{bodyStr}
 }
@@ -282,15 +279,15 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	}
 
 	restartPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "restart-prompt",
+		MessageID:    "restart-prompt",
+		TemplateData: map[string]string{"Number": "2"},
 	})
 	if len(results) == 0 {
 		// Increment page so that it won't continue to send on replies
 		c.Page++
-		replyStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		replyStr := fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "no-results",
-		})
-		replyStr += fmt.Sprintf("\n%s", restartPrompt)
+		}))
 		return []string{replyStr}, nil
 	}
 
@@ -304,11 +301,10 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 
 	// Include results header if first page of results
 	if c.Page == 0 {
-		resultsStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		bodyStr += fmt.Sprintf("%s\n", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID:   "results-available",
 			PluralCount: len(results),
-		})
-		bodyStr += fmt.Sprintf("%s\n", resultsStr)
+		}))
 	}
 
 	// Add result text to the message body
@@ -319,7 +315,8 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	// Show a prompt for paginating if more results available
 	if hasRemaining {
 		seeMoreStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "see-more-prompt",
+			MessageID:    "see-more-prompt",
+			TemplateData: map[string]string{"Number": "1"},
 		})
 		bodyStr += fmt.Sprintf("\n\n%s\n", seeMoreStr)
 	} else {
