@@ -1,6 +1,6 @@
 # Chicago COVID Chat Bot
 
-[![Build status](https://github.com/City-Bureau/chicovidchat/workflows/CI/badge.svg)](https://github.com/City-Bureau/chicovidchat/actions)
+[![Build status](https://github.com/City-Bureau/chicovidchat/workflows/Deploy/badge.svg)](https://github.com/City-Bureau/chicovidchat/actions)
 
 ## Setup
 
