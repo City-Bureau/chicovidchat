@@ -159,9 +159,15 @@ func (c *DirectoryChat) handleSetLanguage(body string) ([]string, error) {
 }
 
 func (c *DirectoryChat) buildWhatMessage() []string {
-	bodyStr := fmt.Sprintf("%s\n", c.localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "what-prompt",
-	}))
+	bodyStr := fmt.Sprintf(
+		"%s\n%s\n",
+		c.localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "what-prompt",
+		}),
+		c.localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "enter-all-numbers",
+		}),
+	)
 	for idx, val := range whatOptions() {
 		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
@@ -198,9 +204,15 @@ func (c *DirectoryChat) handleSetWhat(body string) ([]string, error) {
 }
 
 func (c *DirectoryChat) buildWhoMessage() []string {
-	bodyStr := fmt.Sprintf("%s\n", c.localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "who-prompt",
-	}))
+	bodyStr := fmt.Sprintf(
+		"%s\n%s\n",
+		c.localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "who-prompt",
+		}),
+		c.localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "enter-all-numbers",
+		}),
+	)
 	for idx, val := range whoOptions() {
 		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
