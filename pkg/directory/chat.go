@@ -164,8 +164,11 @@ func (c *DirectoryChat) buildWhatMessage() []string {
 	}))
 	for idx, val := range whatOptions() {
 		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
-			DefaultMessage: &i18n.Message{ID: val, Other: val},
-			TemplateData:   map[string]string{"Number": strconv.Itoa(idx)},
+			DefaultMessage: &i18n.Message{
+				ID:    fmt.Sprintf("option-%s", val),
+				Other: fmt.Sprintf("%d %s", idx, val),
+			},
+			TemplateData: map[string]string{"Number": strconv.Itoa(idx)},
 		}))
 	}
 	return []string{bodyStr}
@@ -200,8 +203,11 @@ func (c *DirectoryChat) buildWhoMessage() []string {
 	}))
 	for idx, val := range whoOptions() {
 		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
-			DefaultMessage: &i18n.Message{ID: val, Other: val},
-			TemplateData:   map[string]string{"Number": strconv.Itoa(idx)},
+			DefaultMessage: &i18n.Message{
+				ID:    fmt.Sprintf("option-%s", val),
+				Other: fmt.Sprintf("%d %s", idx, val),
+			},
+			TemplateData: map[string]string{"Number": strconv.Itoa(idx)},
 		}))
 	}
 	return []string{bodyStr}
@@ -301,15 +307,15 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 
 	// Include results header if first page of results
 	if c.Page == 0 {
-		bodyStr += fmt.Sprintf("%s\n", c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		bodyStr += c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID:   "results-available",
 			PluralCount: len(results),
-		}))
+		})
 	}
 
 	// Add result text to the message body
 	for _, result := range sendResults {
-		bodyStr += fmt.Sprintf("\n\n%s", result.AsText(c.Language, c.localizer))
+		bodyStr += fmt.Sprintf("\n\n\n%s", result.AsText(c.Language, c.localizer))
 	}
 
 	// Show a prompt for paginating if more results available

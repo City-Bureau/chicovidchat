@@ -42,38 +42,43 @@ type Resource struct {
 
 // AsText should return a resource as it should display for a chat message
 func (r *Resource) AsText(lang string, localizer *i18n.Localizer) string {
-	resourceStr := r.Name
+	resourceStr := fmt.Sprintf("%s\n", r.Name)
 	if r.Category != nil && len(r.Category) > 0 {
-		resourceStr += "\n"
-		resourceStr += translateSlice(r.Category, localizer)
+		resourceStr += fmt.Sprintf("\n%s: %s", localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "what-label",
+		}), translateSlice(r.Category, localizer))
 	}
 	if r.Who != nil && len(r.Who) > 0 {
-		resourceStr += "\n"
-		resourceStr += translateSlice(r.Who, localizer)
+		resourceStr += fmt.Sprintf("\n%s: %s", localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "who-label",
+		}), translateSlice(r.Who, localizer))
 	}
 	if r.Languages != nil && len(r.Languages) > 0 {
-		resourceStr += "\n"
-		resourceStr += translateSlice(r.Languages, localizer)
+		resourceStr += fmt.Sprintf("\n%s: %s", localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "languages-label",
+		}), translateSlice(r.Languages, localizer))
+	}
+	if r.Hours != "" {
+		resourceStr += fmt.Sprintf("\n%s: %s", localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "hours-label",
+		}), r.Hours)
 	}
 
 	langDescription := r.descriptionForLang(lang)
 	if langDescription != "" {
-		resourceStr += fmt.Sprintf("\n%s", langDescription)
-	}
-	if r.Hours != "" {
-		resourceStr += fmt.Sprintf("\n%s", r.Hours)
+		resourceStr += fmt.Sprintf("\n\n%s\n", langDescription)
 	}
 	if r.Phone != "" {
 		resourceStr += fmt.Sprintf("\n%s", r.Phone)
-	}
-	if r.Address != "" {
-		resourceStr += fmt.Sprintf("\n%s", r.Address)
 	}
 	if r.Link != "" {
 		resourceStr += fmt.Sprintf("\n%s", r.Link)
 	}
 	if r.Email != "" {
 		resourceStr += fmt.Sprintf("\n%s", r.Email)
+	}
+	if r.Address != "" {
+		resourceStr += fmt.Sprintf("\n%s", r.Address)
 	}
 	return resourceStr
 }
