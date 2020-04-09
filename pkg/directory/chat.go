@@ -26,6 +26,8 @@ const (
 	results     chatState = "results"
 )
 
+// Used to force Unicode in SMS so that ñ renders consistently
+const punctuationSpace string = " "
 const pageSize int = 3
 
 // DirectoryChat manages chat conversations for directory filtering
@@ -128,12 +130,13 @@ func (c *DirectoryChat) handleStarted(body string) ([]string, error) {
 
 func (c *DirectoryChat) buildLanguageMessage() []string {
 	bodyStr := fmt.Sprintf(
-		"%s\n\n%s\n",
+		"%s\n\n%s%s\n",
 		c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "intro-text",
 		}), c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "language-prompt",
 		}),
+		punctuationSpace,
 	)
 	for idx, val := range languageOptions() {
 		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
