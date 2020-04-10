@@ -40,9 +40,18 @@ func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]st
 		}
 	}
 
-	whatMatches := len(f.What) == 0 || stringSlicesOverlap(f.What, resource.Category)
 	// Includes unrestricted resources in addition to filtered ones
-	whoMatches := len(f.Who) == 0 || len(resource.Who) == 0 || stringSlicesOverlap(f.Who, resource.Who)
+	whoMatches := len(f.Who) == 0 || len(resource.Who) == 0
+	whoOpts := whoOptions()
+	checkWhoOpts := whoOpts[1 : len(whoOpts)-1]
+	// If none is a part of the filters, only match resources without the who option items
+	// Otherwise check for overlap on selected items
+	if stringSlicesOverlap(f.Who, []string{"None"}) {
+		whoMatches = whoMatches || !stringSlicesOverlap(checkWhoOpts, resource.Who)
+	} else {
+		whoMatches = whoMatches || stringSlicesOverlap(f.Who, resource.Who)
+	}
+	whatMatches := len(f.What) == 0 || stringSlicesOverlap(f.What, resource.Category)
 	langMatches := len(f.Languages) == 0 || stringSlicesOverlap(f.Languages, resource.Languages)
 	return whatMatches && whoMatches && langMatches && zipMatches
 }

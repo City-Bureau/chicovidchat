@@ -51,3 +51,22 @@ func TestMatchesFiltersWho(t *testing.T) {
 		t.Errorf("Filters with who not matching empty resources, matching, excluding other who resources")
 	}
 }
+
+func TestMatchesFiltersWhoNone(t *testing.T) {
+	fakeZIP := "12345"
+	params := FilterParams{ZIP: &fakeZIP}
+	resourceNoWho := Resource{Who: []string{}, Status: "Approved"}
+	resourceWho := Resource{Who: []string{"Families"}, Status: "Approved"}
+	resourceUntrackedWho := Resource{Who: []string{"TEST"}, Status: "Approved"}
+	params.Who = []string{"None"}
+
+	if !params.MatchesFilters(resourceNoWho, nil) {
+		t.Errorf("Who filter for none should match resource with no who categories")
+	}
+	if params.MatchesFilters(resourceWho, nil) {
+		t.Errorf("Who filter for none should not match resource with tracked who category")
+	}
+	if !params.MatchesFilters(resourceUntrackedWho, nil) {
+		t.Errorf("Who filter for none should match resource with untracked who category")
+	}
+}

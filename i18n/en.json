@@ -1,5 +1,5 @@
 {
-  "intro-text": "Chicago COVID Resources",
+  "intro-text": "Chicago COVID Resource Finder",
   "language-prompt": "Please select your language",
   "what-prompt": "What kind of resources are you looking for?",
   "who-prompt": "Are you interested in resources for any of these groups?",
@@ -32,6 +32,8 @@
   "option-LGBTQI": "Text {{.Number}} for LGBTQI",
   "option-Business Owners": "Text {{.Number}} for Business Owners",
   "option-Students": "Text {{.Number}} for Students",
+  "option-None": "Text {{.Number}} for none of the above",
+  "who-option-All": "Text {{.Number}} for resources for any group",
   "Money": "Money",
   "Food": "Food",
   "Housing": "Housing",

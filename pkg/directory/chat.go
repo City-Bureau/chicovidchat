@@ -84,7 +84,7 @@ func whatOptions() []string {
 }
 
 func whoOptions() []string {
-	return []string{"All", "Families", "Immigrants", "LGBTQI", "Business Owners", "Students"}
+	return []string{"All", "Families", "Immigrants", "LGBTQI", "Business Owners", "Students", "None"}
 }
 
 // HandleMessage updates chat state based on message
@@ -217,9 +217,14 @@ func (c *DirectoryChat) buildWhoMessage() []string {
 		}),
 	)
 	for idx, val := range whoOptions() {
+		optionKey := "option"
+		// Override display of "All" translation
+		if idx == 0 {
+			optionKey = "who-option"
+		}
 		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
-				ID:    fmt.Sprintf("option-%s", val),
+				ID:    fmt.Sprintf("%s-%s", optionKey, val),
 				Other: fmt.Sprintf("%d %s", idx, val),
 			},
 			TemplateData: map[string]string{"Number": strconv.Itoa(idx)},
@@ -230,12 +235,18 @@ func (c *DirectoryChat) buildWhoMessage() []string {
 
 func (c *DirectoryChat) handleSetWho(body string) ([]string, error) {
 	hasMatch := false
-	for idx, val := range whoOptions() {
+	whoOpts := whoOptions()
+	for idx, val := range whoOpts {
 		if strings.Contains(body, strconv.Itoa(idx)) {
 			hasMatch = true
 			// 0 is option for all
 			if idx == 0 {
 				c.State = setZIP
+				return c.buildZIPMessage(), nil
+			} else if idx == len(whoOpts)-1 {
+				// Last item is option for none
+				c.State = setZIP
+				c.Params.Who = []string{"None"}
 				return c.buildZIPMessage(), nil
 			}
 			c.Params.Who = append(c.Params.Who, val)
