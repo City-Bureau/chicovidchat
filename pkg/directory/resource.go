@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -167,6 +168,25 @@ func LoadAirtableResources(base, table, key string) ([]Resource, error) {
 	for _, rec := range records {
 		resources = append(resources, rec.Fields)
 	}
+
+	levelOrder := map[string]int{
+		"National":     0,
+		"State":        1,
+		"County":       2,
+		"City":         3,
+		"Neighborhood": 4,
+	}
+	sort.SliceStable(resources, func(a, b int) bool {
+		aVal, aOk := levelOrder[resources[a].Level]
+		if !aOk {
+			aVal = 10
+		}
+		bVal, bOk := levelOrder[resources[b].Level]
+		if !bOk {
+			bVal = 10
+		}
+		return aVal < bVal
+	})
 
 	return resources, nil
 }
