@@ -63,7 +63,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	return events.APIGatewayProxyResponse{
-		Body:       `<?xml verson="1.0" encoding="UTF-8"?><Response></Response>`,
+		Body:       `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`,
 		Headers:    map[string]string{"content-type": "text/html"},
 		StatusCode: 200,
 	}, nil
