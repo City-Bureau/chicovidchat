@@ -185,6 +185,9 @@ func LoadAirtableResources(base, table, key string) ([]Resource, error) {
 		if !bOk {
 			bVal = 10
 		}
+		if aVal == bVal {
+			return len(resources[a].Who) < len(resources[b].Who)
+		}
 		return aVal < bVal
 	})
 
