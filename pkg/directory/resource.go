@@ -21,24 +21,25 @@ import (
 
 // Resource represents one item from the Airtable directory
 type Resource struct {
-	Name          string     `json:"Name"`
-	Link          string     `json:"Link"`
-	Phone         string     `json:"Phone"`
-	Email         string     `json:"Email"`
-	Description   string     `json:"Description"`
-	DescriptionES string     `json:"Description ES"`
-	Hours         string     `json:"Hours"`
-	Languages     []string   `json:"Languages,omitempty"`
-	Address       string     `json:"Address"`
-	ZIP           string     `json:"ZIP"`
-	Category      []string   `json:"Category,omitempty"`
-	Who           []string   `json:"Who,omitempty"`
-	Level         string     `json:"Level"`
-	Type          string     `json:"Type"`
-	Status        string     `json:"Status"`
-	ExternalID    string     `json:"External ID"`
-	LastUpdated   *time.Time `json:"Last Updated,omitempty"`
-	Created       *time.Time `json:"Created,omitempty"`
+	Name           string     `json:"Name"`
+	Link           string     `json:"Link"`
+	Phone          string     `json:"Phone"`
+	Email          string     `json:"Email"`
+	Description    string     `json:"Description"`
+	DescriptionES  string     `json:"Description ES"`
+	Hours          string     `json:"Hours"`
+	Languages      []string   `json:"Languages,omitempty"`
+	Address        string     `json:"Address"`
+	ZIP            string     `json:"ZIP"`
+	Category       []string   `json:"Category,omitempty"`
+	Who            []string   `json:"Who,omitempty"`
+	Qualifications []string   `json:"Qualifications,omitempty"`
+	Level          string     `json:"Level"`
+	Type           string     `json:"Type"`
+	Status         string     `json:"Status"`
+	ExternalID     string     `json:"External ID"`
+	LastUpdated    *time.Time `json:"Last Updated,omitempty"`
+	Created        *time.Time `json:"Created,omitempty"`
 }
 
 // AsText should return a resource as it should display for a chat message

@@ -80,7 +80,7 @@ func languageOptions() []string {
 
 // Values should be IDs for i18n messages
 func whatOptions() []string {
-	return []string{"All", "Money", "Food", "Housing", "Health", "Utilities", "Legal Help"}
+	return []string{"All", "Money", "Food", "Housing", "Health", "Mental Health", "Utilities", "Legal Help"}
 }
 
 func whoOptions() []string {
