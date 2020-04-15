@@ -3,6 +3,7 @@
 cmd := $(shell find cmd -name \*main.go | awk -F'/' '{print $$2}')
 
 install:
+	npm install -g serverless
 	npm install
 
 test:
