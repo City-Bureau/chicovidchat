@@ -171,11 +171,11 @@ func LoadAirtableResources(base, table, key string) ([]Resource, error) {
 	}
 
 	levelOrder := map[string]int{
-		"National":     1,
-		"State":        2,
-		"County":       3,
-		"City":         4,
-		"Neighborhood": 5,
+		"State":        1,
+		"County":       2,
+		"City":         3,
+		"Neighborhood": 4,
+		"National":     5,
 	}
 	sort.SliceStable(resources, func(a, b int) bool {
 		aVal, aOk := levelOrder[resources[a].Level]
