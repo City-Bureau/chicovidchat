@@ -25,6 +25,7 @@
   "option-Food": "Text {{.Number}} for Food",
   "option-Housing": "Text {{.Number}} for Housing",
   "option-Health": "Text {{.Number}} for Health",
+  "option-Mental Health": "Text {{.Number}} for Mental Health",
   "option-Utilities": "Text {{.Number}} for Utilities",
   "option-Legal Help": "Text {{.Number}} for Legal Help",
   "option-Families": "Text {{.Number}} for Families",
