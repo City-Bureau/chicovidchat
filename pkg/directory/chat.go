@@ -296,6 +296,7 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	}
 
 	zipMap := ZIPCodeMap()
+	chiZips := ChiZIPCodes()
 	resources, err := LoadResources()
 	if err != nil {
 		return []string{}, err
@@ -305,7 +306,7 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	log.Println(string(filterJSON))
 
 	for _, resource := range resources {
-		if c.Params.MatchesFilters(resource, &zipMap) {
+		if c.Params.MatchesFilters(resource, &zipMap, &chiZips) {
 			results = append(results, resource)
 		}
 	}

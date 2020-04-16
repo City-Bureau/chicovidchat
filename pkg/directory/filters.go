@@ -17,7 +17,7 @@ func (f *FilterParams) isEmpty() bool {
 }
 
 // MatchesFilters determines whether a resource matches filter parameters
-func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]string) bool {
+func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]string, cityZips *[]string) bool {
 	// If filters are empty, return true
 	if f.isEmpty() {
 		return true
@@ -27,9 +27,12 @@ func (f *FilterParams) MatchesFilters(resource Resource, zipMap *map[string][]st
 	}
 	zipMatches := false
 	if f.ZIP != nil {
-		if resource.Level != "Neighborhood" {
+		if (resource.Level != "Neighborhood" && resource.Level != "City") ||
+			(resource.Level == "City" && cityZips == nil) {
 			zipMatches = true
-		} else if zipMap != nil {
+		} else if resource.Level == "City" {
+			zipMatches = stringSlicesOverlap([]string{*f.ZIP}, *cityZips)
+		} else if resource.Level == "Neighborhood" && zipMap != nil {
 			if zipMatchList, ok := (*zipMap)[*f.ZIP]; ok {
 				zipMatches = stringSlicesOverlap([]string{*f.ZIP}, zipMatchList)
 			} else {
