@@ -1,5 +1,5 @@
 {
-  "intro-text": "Chicago COVID Resource Finder",
+  "site-title": "Chicago COVID Resource Finder",
   "language-prompt": "Please select your language",
   "what-prompt": "What kind of resources are you looking for?",
   "who-prompt": "Are you interested in resources for any of these groups?",
@@ -20,6 +20,7 @@
   "hours-label": "Hours",
   "option-en": "Text {{.Number}} for English",
   "option-es": "Texto {{.Number}} para Español",
+  "option-pl": "Wyślij SMS {number}, dla polski",
   "option-All": "Text {{.Number}} to return resources for all these options",
   "option-Money": "Text {{.Number}} for Money",
   "option-Food": "Text {{.Number}} for Food",
