@@ -163,13 +163,14 @@ func (c *DirectoryChat) handleSetLanguage(body string) ([]string, error) {
 
 func (c *DirectoryChat) buildWhatMessage() []string {
 	bodyStr := fmt.Sprintf(
-		"%s\n%s\n",
+		"%s\n%s%s\n",
 		c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "what-prompt",
 		}),
 		c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "enter-all-numbers",
 		}),
+		c.unicodeIfNeeded(),
 	)
 	for idx, val := range whatOptions() {
 		bodyStr += fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
@@ -208,13 +209,14 @@ func (c *DirectoryChat) handleSetWhat(body string) ([]string, error) {
 
 func (c *DirectoryChat) buildWhoMessage() []string {
 	bodyStr := fmt.Sprintf(
-		"%s\n%s\n",
+		"%s\n%s%s\n",
 		c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "who-prompt",
 		}),
 		c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "enter-all-numbers",
 		}),
+		c.unicodeIfNeeded(),
 	)
 	for idx, val := range whoOptions() {
 		optionKey := "option"
@@ -266,6 +268,7 @@ func (c *DirectoryChat) buildZIPMessage() []string {
 	zipPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "zip-prompt",
 	})
+	zipPrompt += c.unicodeIfNeeded()
 	return []string{zipPrompt}
 }
 
@@ -315,12 +318,13 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 		MessageID:    "restart-prompt",
 		TemplateData: map[string]string{"Number": "2"},
 	})
+	restartPrompt += c.unicodeIfNeeded()
 	if len(results) == 0 {
 		// Increment page so that it won't continue to send on replies
 		c.Page++
-		replyStr := fmt.Sprintf("\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		replyStr := fmt.Sprintf("\n%s%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "no-results",
-		}))
+		}), c.unicodeIfNeeded())
 		return []string{replyStr}, nil
 	}
 
@@ -368,6 +372,14 @@ func (c *DirectoryChat) handleRestart() ([]string, error) {
 	c.State = setWhat
 	c.Page = 0
 	return c.buildWhatMessage(), nil
+}
+
+// Add a unicode punctuation space to ensure non-ASCII characters load if language isn't English
+func (c *DirectoryChat) unicodeIfNeeded() string {
+	if c.Language != "" && c.Language != "en" {
+		return punctuationSpace
+	}
+	return ""
 }
 
 func PaginateResults(resources []Resource, page int) ([]Resource, bool) {
