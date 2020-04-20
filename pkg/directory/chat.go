@@ -130,9 +130,11 @@ func (c *DirectoryChat) handleStarted(body string) ([]string, error) {
 
 func (c *DirectoryChat) buildLanguageMessage() []string {
 	bodyStr := fmt.Sprintf(
-		"%s\n\n%s%s\n",
+		"%s\n%s\n\n%s%s\n",
 		c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "site-title",
+		}), c.localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "site-intro",
 		}), c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "language-prompt",
 		}),
