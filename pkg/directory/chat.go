@@ -75,7 +75,7 @@ func UpdateDirectoryChatConversation(directoryChat *DirectoryChat, conversation 
 }
 
 func languageOptions() []string {
-	return []string{"en", "es", "pl"}
+	return []string{"en", "es", "pl", "tl"}
 }
 
 // Values should be IDs for i18n messages
