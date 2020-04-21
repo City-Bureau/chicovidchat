@@ -1,5 +1,5 @@
 {
-  "site-title": "Wyszukiwarka COVID Chicago",
+  "site-title": "Wyszukiwarka Informacji COVID Chicago",
   "site-intro": "",
   "language-prompt": "Wybierz swój język",
   "what-prompt": "Jakiego rodzaju źródeł informacji szukasz?",
@@ -20,7 +20,7 @@
   "languages-label": "Języki",
   "hours-label": "Godziny",
   "option-en": "Text {{.Number}} for English",
-  "option-es": "para Español, enviar mensaje a {{.Number}}",
+  "option-es": "Envia un mensaje de texto a {{.Number}}} para español",
   "option-pl": "Wyślij SMS {{.Number}}, dla polski",
   "option-All": "Wyślij SMS {{.Number}}, aby wrócić do źródeł informacji dla wszystkich tych opcji",
   "option-Money": "Wyślij SMS {{.Number}},  Pieniądze",
