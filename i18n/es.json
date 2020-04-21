@@ -23,6 +23,7 @@
   "option-es": "Envia un mensaje de texto a {{.Number}} para español",
   "option-pl": "Wyślij SMS {{.Number}}, dla polski",
   "option-tl": "Itext ang {{.Number}} para sa Tagalog",
+  "option-vi": "Nhắn {{.Number}} để sử dụng Tiếng Việt",
   "option-All": "Envia un mensaje de texto a {{.Number}} para devolver recursos por todos estas opciones.",
   "option-Money": "Envia un mensaje de texto a {{.Number}} para Dinero",
   "option-Food": "Envia un mensaje de texto a {{.Number}} para Comida",

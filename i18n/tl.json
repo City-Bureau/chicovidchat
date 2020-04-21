@@ -23,6 +23,7 @@
   "option-es": "Texto {{.Number}} para Español",
   "option-pl": "Wyślij SMS {{.Number}}, dla polski",
   "option-tl": "Itext ang {{.Number}} para sa Tagalog",
+  "option-vi": "Nhắn {{.Number}} để sử dụng Tiếng Việt",
   "option-All": "Itext {{.Number}} para bumalik sa resources para sa lahat ng opsyon dito",
   "option-Money": "Itext ang {{.Number}} para sa Pera",
   "option-Food": "Itext ang {{.Number}} para sa Pagkain",
