@@ -20,7 +20,7 @@
   "languages-label": "Ngôn ngữ",
   "hours-label": "Giờ",
   "option-en": "Text {{.Number}} for English",
-  "option-es": "Texto {{.Number}} para Español",
+  "option-es": "Envia un mensaje de texto a {{.Number}} para español",
   "option-pl": "Wyślij SMS {{.Number}}, dla polski",
   "option-tl": "Itext ang {{.Number}} para sa Tagalog",
   "option-vi": "Nhắn {{.Number}} để sử dụng Tiếng Việt",
