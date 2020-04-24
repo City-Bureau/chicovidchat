@@ -322,17 +322,18 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	})
 	restartPrompt += c.unicodeIfNeeded()
 
-	infoAidPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID:    "info-aid-prompt",
-		TemplateData: map[string]string{"Number": "3"},
-	})
+	// infoAidPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+	// 	MessageID:    "info-aid-prompt",
+	// 	TemplateData: map[string]string{"Number": "3"},
+	// })
 
 	if len(results) == 0 {
 		// Increment page so that it won't continue to send on replies
 		c.Page++
-		replyStr := fmt.Sprintf("\n%s\n\n%s\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		// Add infoAidPrompt when including
+		replyStr := fmt.Sprintf("\n%s\n\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "no-results",
-		}), restartPrompt, infoAidPrompt)
+		}), restartPrompt)
 		return []string{replyStr}, nil
 	}
 
@@ -370,9 +371,9 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 	}
 	bodyStr += restartPrompt
 	// Add info aid prompt on first page of results
-	if c.Page == 0 {
-		bodyStr += fmt.Sprintf("\n%s", infoAidPrompt)
-	}
+	// if c.Page == 0 {
+	// 	bodyStr += fmt.Sprintf("\n%s", infoAidPrompt)
+	// }
 	c.Page++
 
 	return []string{bodyStr}, nil
