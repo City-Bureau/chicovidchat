@@ -15,6 +15,7 @@
   },
   "see-more-prompt": "Text {{.Number}} to see more resources",
   "restart-prompt": "Text {{.Number}} to restart",
+  "info-aid-prompt": "Text {{.Number}} if you would like us to help you fact-check local rumors, answer questions or connect you with a local journalist",
   "what-label": "What",
   "who-label": "Who",
   "languages-label": "Languages",

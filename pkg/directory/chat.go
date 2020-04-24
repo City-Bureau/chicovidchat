@@ -321,12 +321,18 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 		TemplateData: map[string]string{"Number": "2"},
 	})
 	restartPrompt += c.unicodeIfNeeded()
+
+	infoAidPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID:    "info-aid-prompt",
+		TemplateData: map[string]string{"Number": "3"},
+	})
+
 	if len(results) == 0 {
 		// Increment page so that it won't continue to send on replies
 		c.Page++
-		replyStr := fmt.Sprintf("\n%s%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		replyStr := fmt.Sprintf("\n%s\n\n%s\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "no-results",
-		}), c.unicodeIfNeeded())
+		}), restartPrompt, infoAidPrompt)
 		return []string{replyStr}, nil
 	}
 
@@ -363,6 +369,10 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 		bodyStr += "\n\n"
 	}
 	bodyStr += restartPrompt
+	// Add info aid prompt on first page of results
+	if c.Page == 0 {
+		bodyStr += fmt.Sprintf("\n%s", infoAidPrompt)
+	}
 	c.Page++
 
 	return []string{bodyStr}, nil
