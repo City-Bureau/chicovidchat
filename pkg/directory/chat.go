@@ -295,7 +295,7 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 
 	if strings.Contains(body, "2") {
 		return c.handleRestart()
-	} else if !strings.Contains(body, "1") && c.Page != 0 {
+	} else if !strings.Contains(body, "1") && !strings.Contains(body, "3") && c.Page != 0 {
 		// If page is not 0 and "1" not in string, ignore
 		return []string{}, nil
 	}
@@ -316,30 +316,46 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 		}
 	}
 
-	restartPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+	seeMorePrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID:    "see-more-prompt",
+		TemplateData: map[string]string{"Number": "1"},
+	})
+
+	restartPrompt := fmt.Sprintf("%s%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID:    "restart-prompt",
 		TemplateData: map[string]string{"Number": "2"},
-	})
-	restartPrompt += c.unicodeIfNeeded()
+	}), c.unicodeIfNeeded())
 
-	// infoAidPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
-	// 	MessageID:    "info-aid-prompt",
-	// 	TemplateData: map[string]string{"Number": "3"},
-	// })
+	infoAidPrompt := c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID:    "info-aid-prompt",
+		TemplateData: map[string]string{"Number": "3"},
+	})
+
+	sendResults, hasRemaining := PaginateResults(results, c.Page)
+
+	// Handle adding to Info Aid Network list
+	if strings.Contains(body, "3") {
+		infoAidReply := fmt.Sprintf("%s\n\n", c.localizer.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "info-aid-success",
+		}))
+		if hasRemaining {
+			infoAidReply += fmt.Sprintf("%s\n", seeMorePrompt)
+		}
+		infoAidReply += restartPrompt
+		return []string{infoAidReply}, nil
+	}
 
 	if len(results) == 0 {
 		// Increment page so that it won't continue to send on replies
 		c.Page++
-		// Add infoAidPrompt when including
-		replyStr := fmt.Sprintf("\n%s\n\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
+		replyStr := fmt.Sprintf("%s\n\n%s\n%s", c.localizer.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "no-results",
-		}), restartPrompt)
+		}), restartPrompt, infoAidPrompt)
 		return []string{replyStr}, nil
 	}
 
 	bodyStr := ""
 
-	sendResults, hasRemaining := PaginateResults(results, c.Page)
 	// Skip if past pagination limits
 	if len(sendResults) == 0 {
 		return []string{}, nil
@@ -360,20 +376,18 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 
 	// Show a prompt for paginating if more results available
 	if hasRemaining {
-		seeMoreStr := c.localizer.MustLocalize(&i18n.LocalizeConfig{
-			MessageID:    "see-more-prompt",
-			TemplateData: map[string]string{"Number": "1"},
-		})
-		bodyStr += fmt.Sprintf("\n\n%s\n", seeMoreStr)
+		bodyStr += fmt.Sprintf("\n\n%s\n", seeMorePrompt)
 	} else {
 		// Add padding for restart prompt if see more prompt not included
 		bodyStr += "\n\n"
 	}
 	bodyStr += restartPrompt
+
 	// Add info aid prompt on first page of results
-	// if c.Page == 0 {
-	// 	bodyStr += fmt.Sprintf("\n%s", infoAidPrompt)
-	// }
+	if c.Page == 0 {
+		bodyStr += fmt.Sprintf("\n%s", infoAidPrompt)
+	}
+
 	c.Page++
 
 	return []string{bodyStr}, nil
