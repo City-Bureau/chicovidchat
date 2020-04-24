@@ -26,6 +26,7 @@
   "option-ur": "اردو کے لیے {{.Number}} پر ٹیکسٹ کریں",
   "option-tl": "Itext ang {{.Number}} para sa Tagalog",
   "option-vi": "Nhắn {{.Number}} để sử dụng Tiếng Việt",
+  "option-bs": "Pošaljite poruku na {{.Number}} za bosanski",
   "option-All": "返回所有这些选项的资源，请发短信至 {{.Number}}",
   "option-Money": "需要金钱方面的资源，请发短信至 {{.Number}}",
   "option-Food": "需要食物方面的资源，请发短信至 {{.Number}}",
