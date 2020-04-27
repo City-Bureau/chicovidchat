@@ -28,6 +28,7 @@
   "option-ur": "اردو کے لیے {{.Number}} پر ٹیکسٹ کریں",
   "option-tl": "Itext ang {{.Number}} para sa Tagalog",
   "option-vi": "Nhắn {{.Number}} để sử dụng Tiếng Việt",
+  "option-fr": "Appuyez {{.Number}} pour le français",
   "option-bs": "Pošaljite poruku na {{.Number}} za bosanski",
   "option-All": "Text {{.Number}} to return resources for all these options",
   "option-Money": "Text {{.Number}} for Money",
