@@ -1,8 +1,10 @@
 package directory
 
 import (
+	"log"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 	"testing"
 
@@ -113,5 +115,21 @@ func TestPaginateResults(t *testing.T) {
 	results, hasMore = PaginateResults(resources, 2)
 	if len(results) != 0 || hasMore {
 		t.Errorf("Third page not pulling correct results")
+	}
+}
+
+func TestSplitMessage(t *testing.T) {
+	testStr := "Test"
+	if !reflect.DeepEqual(SplitMessage(testStr, 10), []string{"Test"}) {
+		t.Errorf("SplitMessage not returning single message for value under the max")
+	}
+	testNewlineStr := "This is \nanother test"
+	if !reflect.DeepEqual(SplitMessage(testNewlineStr, 15), []string{"This is ", "another test"}) {
+		t.Errorf("SplitMessage not correctly breaking on newline")
+	}
+	testNewlineStr2 := "This is \nanother \ntest and more tests"
+	if !reflect.DeepEqual(SplitMessage(testNewlineStr2, 20), []string{"This is \nanother ", "test and more tests"}) {
+		log.Println(testNewlineStr2)
+		t.Errorf("SplitMessage not correctly breaking on newline")
 	}
 }

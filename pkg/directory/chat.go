@@ -29,6 +29,7 @@ const (
 // Used to force Unicode in SMS so that ñ renders consistently
 const punctuationSpace string = " "
 const pageSize int = 3
+const maxSmsLen int = 1600
 
 // DirectoryChat manages chat conversations for directory filtering
 type DirectoryChat struct {
@@ -390,7 +391,7 @@ func (c *DirectoryChat) handleResults(body string) ([]string, error) {
 
 	c.Page++
 
-	return []string{bodyStr}, nil
+	return SplitMessage(bodyStr, maxSmsLen), nil
 }
 
 // Reset filters, page, go back to setting "what", keep language
@@ -419,4 +420,35 @@ func PaginateResults(resources []Resource, page int) ([]Resource, bool) {
 	} else {
 		return resources[startIdx:endIdx], true
 	}
+}
+
+// SplitMessage takes a string and breaks it into chunks of no more than maxLen chars
+func SplitMessage(body string, maxLen int) []string {
+	if len(body) <= maxLen {
+		return []string{body}
+	}
+
+	// lineSlice keeps the current working message contents which are added to
+	// messages once they've reached the limit
+	lineSlice := []string{}
+	lineSliceLen := 0
+	messages := []string{}
+
+	// Iterate through each line, splitting on the first location where
+	// including the next line would go over the max limit
+	for _, line := range strings.Split(body, "\n") {
+		if (lineSliceLen + len(line)) >= maxLen {
+			messages = append(messages, strings.Join(lineSlice, "\n"))
+			lineSlice = []string{}
+			lineSliceLen = 0
+		}
+		lineSlice = append(lineSlice, line)
+		lineSliceLen += len(line) + 1
+	}
+	// Create a message from remainder
+	if lineSliceLen > 0 {
+		messages = append(messages, strings.Join(lineSlice, "\n"))
+	}
+
+	return messages
 }
