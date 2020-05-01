@@ -15,7 +15,7 @@ type Conversation struct {
 }
 
 func CleanupInactiveConversations(db *gorm.DB) {
-	// Mark any conversations as inactive that haven't been updated in 24 hours
-	yesterday := time.Now().Add(time.Hour * -24)
-	db.Model(&Conversation{}).Where("active = ? AND updated_at < ?", true, yesterday).Update("active", false)
+	// Mark any conversations as inactive that haven't been updated in 6 hours
+	sixHoursAgo := time.Now().Add(time.Hour * -6)
+	db.Model(&Conversation{}).Where("active = ? AND updated_at < ?", true, sixHoursAgo).Update("active", false)
 }
