@@ -24,6 +24,7 @@
   "option-en": "Text {{.Number}} for English",
   "option-es": "Envia un mensaje de texto a {{.Number}} para español",
   "option-zh": "需要中文资源，请发短信至 {{.Number}}",
+  "option-ar": "ابعث برسالة على {{.Number}} للغة العربية",
   "option-pl": "Wyślij SMS {{.Number}}, dla polski",
   "option-ur": "اردو کے لیے {{.Number}} پر ٹیکسٹ کریں",
   "option-tl": "Itext ang {{.Number}} para sa Tagalog",
