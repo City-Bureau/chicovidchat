@@ -76,7 +76,7 @@ func UpdateDirectoryChatConversation(directoryChat *DirectoryChat, conversation 
 }
 
 func languageOptions() []string {
-	return []string{"en", "es", "zh", "ar", "pl", "ur", "tl", "vi", "fr", "bs"}
+	return []string{"en", "es", "zh", "ar", "pl", "ur", "tl", "vi", "yo", "fr", "bs", "ko"}
 }
 
 // Values should be IDs for i18n messages
@@ -151,10 +151,15 @@ func (c *DirectoryChat) buildLanguageMessage() []string {
 }
 
 func (c *DirectoryChat) handleSetLanguage(body string) ([]string, error) {
-	for idx, val := range languageOptions() {
+	langOptions := languageOptions()
+	// Iterate through languages in reverse order, break once found
+	// This way we can break once a value is found without potentially
+	// setting the value for "1" when "10" is supplied
+	for idx := len(langOptions) - 1; idx >= 0; idx-- {
 		if strings.Contains(body, strconv.Itoa(idx)) {
-			c.Language = val
-			c.localizer = LoadLocalizer(val)
+			c.Language = langOptions[idx]
+			c.localizer = LoadLocalizer(c.Language)
+			break
 		}
 	}
 	if c.Language == "" {

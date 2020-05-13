@@ -40,6 +40,24 @@ func TestGetOrCreateConversationFromMessage(t *testing.T) {
 	}
 }
 
+func TestHandleSetLanguage(t *testing.T) {
+	dirChat := NewDirectoryChat("test")
+	dirChat.State = setLanguage
+	_, _ = dirChat.HandleMessage(chat.Message{Body: "0"})
+	if dirChat.Language != "en" {
+		t.Errorf("Set language handler not setting first lang correctly")
+	}
+
+	dirChat.State = setLanguage
+	_, _ = dirChat.HandleMessage(chat.Message{Body: "10"})
+	if dirChat.State != setWhat {
+		t.Errorf("Set language handler not advancing state")
+	}
+	if dirChat.Language != "bs" {
+		t.Errorf("Set language handler not setting double-digit index correctly")
+	}
+}
+
 func TestHandleMessageSetMultiple(t *testing.T) {
 	dirChat := NewDirectoryChat("test")
 	dirChat.State = setWhat
