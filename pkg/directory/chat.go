@@ -115,7 +115,7 @@ func (c *DirectoryChat) HandleMessage(message chat.Message) ([]chat.Message, err
 	if len(bodies) > 0 {
 		for _, body := range bodies {
 			replies = append(replies, chat.Message{
-				Sender:    "",
+				Sender:    message.Recipient,
 				Recipient: message.Sender,
 				Body:      body,
 			})

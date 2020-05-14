@@ -26,7 +26,7 @@ func SendMessage(message chat.Message, twilioChat *svc.TwilioChat, snsClient *sv
 	createdAt := time.Now()
 	twilioMessage := chat.Message{
 		ID:        twilioRes.Sid,
-		Sender:    os.Getenv("TWILIO_FROM"),
+		Sender:    message.Sender,
 		Recipient: message.Recipient,
 		Body:      message.Body,
 		CreatedAt: &createdAt,
@@ -57,7 +57,7 @@ func handler(request events.SNSEvent) error {
 	)
 	twilioChat := svc.NewTwilioChat(
 		client,
-		os.Getenv("TWILIO_FROM"),
+		messages[0].Sender,
 		messages[0].Recipient,
 	)
 	snsClient := svc.NewSNSClient()
