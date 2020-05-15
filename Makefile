@@ -21,7 +21,7 @@ build:
 	done
 
 deploy:
-	serverless deploy
+	serverless deploy --stage prod
 
 clean:
 	rm -rf bin

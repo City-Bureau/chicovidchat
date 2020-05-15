@@ -3,7 +3,7 @@ service: chicovidchat
 provider:
   name: aws
   runtime: go1.x
-  stage: prod
+  stage: ${opt:stage, 'dev'}
   region: us-east-2
   environment:
     AIRTABLE_KEY: ${env:AIRTABLE_KEY}
@@ -18,8 +18,9 @@ provider:
     TWILIO_FROM: ${env:TWILIO_FROM}
     TWILIO_ACCOUNT_SID: ${env:TWILIO_ACCOUNT_SID}
     TWILIO_AUTH_TOKEN: ${env:TWILIO_AUTH_TOKEN}
+    SPOKE_ENDPOINT: ${env:SPOKE_ENDPOINT}
   tags:
-    project: chicovidchat-prod
+    project: chicovidchat-${self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -155,6 +156,27 @@ functions:
     vpc: ${self:custom.vpc}
     events:
       - schedule: rate(12 hours)
+  spoke_proxy:
+    handler: bin/spoke_proxy
+    timeout: 30
+    alarms:
+      - functionErrors
+    vpc: ${self:custom.vpc}
+    environment:
+      RDS_HOST: ${self:custom.AURORA.HOST}
+      RDS_PORT: ${self:custom.AURORA.PORT}
+      SNS_TOPIC_ARN:
+        Ref: SNSTopic
+      GW_ENDPOINT:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: "ApiGatewayRestApi"
+            - ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"
+    events:
+      - http:
+          path: api/spoke
+          method: post
 
 resources:
   Resources:
@@ -277,3 +299,48 @@ resources:
         Tags:
           - Key: project
             Value: ${self:service}-${self:provider.stage}
+    PublicSubnet:
+      DependsOn: ServerlessVPC
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId:
+          Ref: ServerlessVPC
+        AvailabilityZone: ${self:provider.region}c
+        CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.2.0/24"
+        MapPublicIpOnLaunch: true
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    InternetGateway:
+      Type: AWS::EC2::InternetGateway
+      Properties:
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    InternetGatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+        InternetGatewayId: !Ref InternetGateway
+        VpcId: !Ref ServerlessVPC
+    NATIP:
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: vpc
+    NAT:
+      Type: AWS::EC2::NatGateway
+      Properties:
+        AllocationId:
+          Fn::GetAtt: [NATIP, AllocationId]
+        SubnetId:
+          Ref: PublicSubnet
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    NatRoute:
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId:
+          Ref: ServerlessRouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId:
+          Ref: NAT
