@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/gorilla/schema"
 	"github.com/sfreiberg/gotwilio"
 
 	"github.com/City-Bureau/chicovidchat/pkg/chat"
@@ -40,7 +41,13 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	var smsWebhook gotwilio.SMSWebhook
-	err = gotwilio.DecodeWebhook(values, &smsWebhook)
+
+	// Create custom decoder ignoring keys not in webhook struct
+	formDecoder := schema.NewDecoder()
+	formDecoder.IgnoreUnknownKeys(true)
+	formDecoder.SetAliasTag("form")
+	err = formDecoder.Decode(&smsWebhook, values)
+
 	if err != nil {
 		return events.APIGatewayProxyResponse{}, err
 	}
