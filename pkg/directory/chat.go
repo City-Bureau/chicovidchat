@@ -152,21 +152,21 @@ func (c *DirectoryChat) buildLanguageMessage() []string {
 
 func (c *DirectoryChat) handleSetLanguage(body string) ([]string, error) {
 	langOptions := languageOptions()
-	// Iterate through languages in reverse order, break once found
-	// This way we can break once a value is found without potentially
+	// Iterate through languages in reverse order, return once found
+	// This way we can return once a value is found without potentially
 	// setting the value for "1" when "10" is supplied
 	for idx := len(langOptions) - 1; idx >= 0; idx-- {
 		if strings.Contains(body, strconv.Itoa(idx)) {
 			c.Language = langOptions[idx]
 			c.localizer = LoadLocalizer(c.Language)
-			break
+			c.State = setWhat
+			return c.buildWhatMessage(), nil
 		}
 	}
-	if c.Language == "" {
-		return c.buildLanguageMessage(), nil
-	}
-	c.State = setWhat
-	return c.buildWhatMessage(), nil
+
+	// Don't return a validation message to reduce extra texts if people
+	// initially correct a text
+	return []string{}, nil
 }
 
 func (c *DirectoryChat) buildWhatMessage() []string {

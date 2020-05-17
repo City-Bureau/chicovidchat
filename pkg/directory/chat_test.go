@@ -48,6 +48,7 @@ func TestHandleSetLanguage(t *testing.T) {
 		t.Errorf("Set language handler not setting first lang correctly")
 	}
 
+	dirChat = NewDirectoryChat("test")
 	dirChat.State = setLanguage
 	_, _ = dirChat.HandleMessage(chat.Message{Body: "10"})
 	if dirChat.State != setWhat {
@@ -55,6 +56,13 @@ func TestHandleSetLanguage(t *testing.T) {
 	}
 	if dirChat.Language != "bs" {
 		t.Errorf("Set language handler not setting double-digit index correctly")
+	}
+
+	dirChat = NewDirectoryChat("test")
+	dirChat.State = setLanguage
+	_, _ = dirChat.HandleMessage(chat.Message{Body: "covid"})
+	if dirChat.State != setLanguage {
+		t.Errorf("Set language advancing on invalid message")
 	}
 }
 
