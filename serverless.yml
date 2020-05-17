@@ -305,7 +305,7 @@ resources:
       Properties:
         VpcId:
           Ref: ServerlessVPC
-        AvailabilityZone: ${self:provider.region}c
+        AvailabilityZone: ${self:provider.region}a
         CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.2.0/24"
         MapPublicIpOnLaunch: true
         Tags:
@@ -344,3 +344,22 @@ resources:
         DestinationCidrBlock: 0.0.0.0/0
         NatGatewayId:
           Ref: NAT
+    PublicRouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref ServerlessVPC
+        Tags:
+          - Key: project
+            Value: ${self:service}-${self:provider.stage}
+    PublicRoute:
+      Type: AWS::EC2::Route
+      DependsOn: InternetGatewayAttachment
+      Properties:
+        RouteTableId: !Ref PublicRouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref InternetGateway
+    ServerlessPublicSubnetRouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref PublicSubnet
+        RouteTableId: !Ref PublicRouteTable
