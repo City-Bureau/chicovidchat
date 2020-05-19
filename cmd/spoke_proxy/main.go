@@ -104,6 +104,13 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	isNewContact := db.Model(&chat.Conversation{}).Where("data ->> 'id' = ?", smsWebhook.From).Last(&conversation).RecordNotFound()
 	isOptIn := strings.ToLower(strings.TrimSpace(smsWebhook.Body)) == optInStr
 	if (isNewContact && isOptIn) || !isNewContact {
+		// Proxy the initial opt-in message to Spoke for clarity
+		if isOptIn {
+			proxyErr := proxyTwilioRequest(request, values)
+			if proxyErr != nil {
+				return events.APIGatewayProxyResponse{}, err
+			}
+		}
 		err = handleChatSMS(smsWebhook)
 	} else {
 		err = proxyTwilioRequest(request, values)
