@@ -44,16 +44,22 @@ func proxyTwilioRequest(request events.APIGatewayProxyRequest, values url.Values
 
 	r.Header.Add("X-Spoke-Proxy-Endpoint", fmt.Sprintf("%s%s", os.Getenv("GW_ENDPOINT"), request.Path))
 	for k, v := range request.Headers {
-		r.Header.Add(k, v)
+		// Ignore headers that would cause issues when forwarded to API Gateway
+		if k != "Host" && k != "Via" && k != "Cache-Control" && !strings.Contains(k, "CloudFront") && !strings.Contains(k, "X-Amz") {
+			r.Header.Add(k, v)
+		}
 	}
 
-	_, err := client.Do(r)
+	res, err := client.Do(r)
+	log.Println(res.StatusCode)
+
 	return err
 }
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	values, err := url.ParseQuery(request.Body)
 	if err != nil {
+		log.Println(err)
 		return events.APIGatewayProxyResponse{}, err
 	}
 
@@ -68,9 +74,11 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		values,
 	)
 	if signatureErr != nil {
+		log.Println(signatureErr)
 		return events.APIGatewayProxyResponse{}, signatureErr
 	}
 	if !isValid {
+		log.Println("Twilio signature is not valid")
 		return events.APIGatewayProxyResponse{}, fmt.Errorf("Twilio signature is not valid")
 	}
 
@@ -83,6 +91,8 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	err = formDecoder.Decode(&smsWebhook, values)
 
 	if err != nil {
+		log.Println("Decoded info not valid")
+		log.Println(err)
 		return events.APIGatewayProxyResponse{}, err
 	}
 
@@ -103,20 +113,22 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	var conversation chat.Conversation
 	isNewContact := db.Model(&chat.Conversation{}).Where("data ->> 'id' = ?", smsWebhook.From).Last(&conversation).RecordNotFound()
 	isOptIn := strings.ToLower(strings.TrimSpace(smsWebhook.Body)) == optInStr
-	if (isNewContact && isOptIn) || !isNewContact {
-		// Proxy the initial opt-in message to Spoke for clarity
-		if isOptIn {
-			proxyErr := proxyTwilioRequest(request, values)
-			if proxyErr != nil {
-				return events.APIGatewayProxyResponse{}, err
-			}
-		}
-		err = handleChatSMS(smsWebhook)
-	} else {
-		err = proxyTwilioRequest(request, values)
-	}
+
+	// Proxy all responses to Spoke-managed numbers to Spoke
+	// even if someone is replying to the bot
+	err = proxyTwilioRequest(request, values)
 	if err != nil {
+		log.Println(err)
 		return events.APIGatewayProxyResponse{}, err
+	}
+
+	// If we've already talked to someone or they're opting in, send them to the bot
+	if (isNewContact && isOptIn) || !isNewContact {
+		err = handleChatSMS(smsWebhook)
+		if err != nil {
+			log.Println(err)
+			return events.APIGatewayProxyResponse{}, err
+		}
 	}
 
 	return events.APIGatewayProxyResponse{
