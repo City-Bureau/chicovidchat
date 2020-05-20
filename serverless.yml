@@ -51,17 +51,14 @@ custom:
     DB_NAME: ${env:RDS_DB_NAME}
     USERNAME: ${env:RDS_USERNAME}
     PASSWORD: ${env:RDS_PASSWORD}
-    HOST:
-      Fn::GetAtt: [AuroraRDSCluster, Endpoint.Address]
-    PORT:
-      Fn::GetAtt: [AuroraRDSCluster, Endpoint.Port]
-    VPC_CIDR: "10"
+    HOST: ${ssm:/${self:provider.stage}/${self:service}/db/host}
+    PORT: ${ssm:/${self:provider.stage}/${self:service}/db/port}
   vpc:
     securityGroupIds:
-      - Fn::GetAtt: ServerlessVPC.DefaultSecurityGroup
+      - ${ssm:/${self:provider.stage}/${self:service}/vpc/security-group/id}
     subnetIds:
-      - Ref: ServerlessSubnetA
-      - Ref: ServerlessSubnetB
+      - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/a}
+      - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/b}
   alerts:
     stages:
       - prod
@@ -180,65 +177,13 @@ functions:
 
 resources:
   Resources:
-    ServerlessVPC:
-      Type: AWS::EC2::VPC
-      Properties:
-        CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.0.0/16"
-        EnableDnsSupport: true
-        EnableDnsHostnames: true
-        InstanceTenancy: default
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    ServerlessSubnetA:
-      DependsOn: ServerlessVPC
-      Type: AWS::EC2::Subnet
-      Properties:
-        VpcId:
-          Ref: ServerlessVPC
-        AvailabilityZone: ${self:provider.region}a
-        CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.0.0/24"
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    ServerlessSubnetB:
-      DependsOn: ServerlessVPC
-      Type: AWS::EC2::Subnet
-      Properties:
-        VpcId:
-          Ref: ServerlessVPC
-        AvailabilityZone: ${self:provider.region}b
-        CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.1.0/24"
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    ServerlessRouteTable:
-      Type: AWS::EC2::RouteTable
-      Properties:
-        VpcId:
-          Ref: ServerlessVPC
-    ServerlessSubnetARouteTableAssociation:
-      Type: AWS::EC2::SubnetRouteTableAssociation
-      Properties:
-        SubnetId:
-          Ref: ServerlessSubnetA
-        RouteTableId:
-          Ref: ServerlessRouteTable
-    ServerlessSubnetBRouteTableAssociation:
-      Type: AWS::EC2::SubnetRouteTableAssociation
-      Properties:
-        SubnetId:
-          Ref: ServerlessSubnetB
-        RouteTableId:
-          Ref: ServerlessRouteTable
     S3Endpoint:
       Type: AWS::EC2::VPCEndpoint
       Properties:
         RouteTableIds:
-          - Ref: ServerlessRouteTable
+          - ${ssm:/${self:provider.stage}/${self:service}/vpc/route-table/id}
         ServiceName: "com.amazonaws.${self:provider.region}.s3"
-        VpcId:
-          Ref: ServerlessVPC
+        VpcId: ${ssm:/${self:provider.stage}/${self:service}/vpc/id}
     SNSTopic:
       Type: AWS::SNS::Topic
       Properties:
@@ -263,103 +208,8 @@ resources:
         PrivateDnsEnabled: true
         VpcEndpointType: Interface
         SecurityGroupIds:
-          - Fn::GetAtt: ServerlessVPC.DefaultSecurityGroup
+          - ${ssm:/${self:provider.stage}/${self:service}/vpc/security-group/id}
         SubnetIds:
-          - Ref: ServerlessSubnetA
-          - Ref: ServerlessSubnetB
-        VpcId:
-          Ref: ServerlessVPC
-    AuroraSubnetGroup:
-      Type: AWS::RDS::DBSubnetGroup
-      Properties:
-        DBSubnetGroupDescription: "Aurora Subnet Group"
-        SubnetIds:
-          - Ref: ServerlessSubnetA
-          - Ref: ServerlessSubnetB
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    AuroraRDSCluster:
-      Type: "AWS::RDS::DBCluster"
-      Properties:
-        MasterUsername: ${self:custom.AURORA.USERNAME}
-        MasterUserPassword: ${self:custom.AURORA.PASSWORD}
-        DBSubnetGroupName:
-          Ref: AuroraSubnetGroup
-        Engine: aurora-postgresql
-        EngineMode: serverless
-        DatabaseName: ${self:custom.AURORA.DB_NAME}
-        BackupRetentionPeriod: 3
-        ScalingConfiguration:
-          MinCapacity: 2
-          MaxCapacity: 8
-        SourceRegion: ${self:provider.region}
-        VpcSecurityGroupIds:
-          - Fn::GetAtt: ServerlessVPC.DefaultSecurityGroup
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    PublicSubnet:
-      DependsOn: ServerlessVPC
-      Type: AWS::EC2::Subnet
-      Properties:
-        VpcId:
-          Ref: ServerlessVPC
-        AvailabilityZone: ${self:provider.region}a
-        CidrBlock: "${self:custom.AURORA.VPC_CIDR}.0.2.0/24"
-        MapPublicIpOnLaunch: true
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    InternetGateway:
-      Type: AWS::EC2::InternetGateway
-      Properties:
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    InternetGatewayAttachment:
-      Type: AWS::EC2::VPCGatewayAttachment
-      Properties:
-        InternetGatewayId: !Ref InternetGateway
-        VpcId: !Ref ServerlessVPC
-    NATIP:
-      Type: AWS::EC2::EIP
-      Properties:
-        Domain: vpc
-    NAT:
-      Type: AWS::EC2::NatGateway
-      Properties:
-        AllocationId:
-          Fn::GetAtt: [NATIP, AllocationId]
-        SubnetId:
-          Ref: PublicSubnet
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    NatRoute:
-      Type: AWS::EC2::Route
-      Properties:
-        RouteTableId:
-          Ref: ServerlessRouteTable
-        DestinationCidrBlock: 0.0.0.0/0
-        NatGatewayId:
-          Ref: NAT
-    PublicRouteTable:
-      Type: AWS::EC2::RouteTable
-      Properties:
-        VpcId: !Ref ServerlessVPC
-        Tags:
-          - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    PublicRoute:
-      Type: AWS::EC2::Route
-      DependsOn: InternetGatewayAttachment
-      Properties:
-        RouteTableId: !Ref PublicRouteTable
-        DestinationCidrBlock: 0.0.0.0/0
-        GatewayId: !Ref InternetGateway
-    ServerlessPublicSubnetRouteTableAssociation:
-      Type: AWS::EC2::SubnetRouteTableAssociation
-      Properties:
-        SubnetId: !Ref PublicSubnet
-        RouteTableId: !Ref PublicRouteTable
+          - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/a}
+          - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/b}
+        VpcId: ${ssm:/${self:provider.stage}/${self:service}/vpc/id}
