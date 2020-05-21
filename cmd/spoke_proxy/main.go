@@ -110,8 +110,9 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 	defer db.Close()
 
-	var conversation chat.Conversation
-	isNewContact := db.Model(&chat.Conversation{}).Where("data ->> 'id' = ?", smsWebhook.From).Last(&conversation).RecordNotFound()
+	var activeCount int64
+	db.Model(&chat.Conversation{}).Where("data ->> 'id' = ? AND active IS TRUE", smsWebhook.From).Count(&activeCount)
+	isInactive := activeCount < 1
 	isOptIn := strings.ToLower(strings.TrimSpace(smsWebhook.Body)) == optInStr
 
 	// Proxy all responses to Spoke-managed numbers to Spoke
@@ -122,8 +123,9 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return events.APIGatewayProxyResponse{}, err
 	}
 
-	// If we've already talked to someone or they're opting in, send them to the bot
-	if (isNewContact && isOptIn) || !isNewContact {
+	// Send message to the bot if someone is in an active conversation with
+	// it or if they're opting into one
+	if (isInactive && isOptIn) || !isInactive {
 		err = handleChatSMS(smsWebhook)
 		if err != nil {
 			log.Println(err)
