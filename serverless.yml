@@ -20,7 +20,8 @@ provider:
     SPOKE_ENDPOINT: ${ssm:/${self:provider.stage}/${self:service}/spoke/endpoint~true}
     S3_BUCKET: ${env:S3_BUCKET}
   tags:
-    project: chicovidchat-${self:provider.stage}
+    project: ${self:service}
+    environment: ${self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -181,13 +182,6 @@ functions:
 
 resources:
   Resources:
-    S3Endpoint:
-      Type: AWS::EC2::VPCEndpoint
-      Properties:
-        RouteTableIds:
-          - ${ssm:/${self:provider.stage}/${self:service}/vpc/route-table/id~true}
-        ServiceName: "com.amazonaws.${self:provider.region}.s3"
-        VpcId: ${ssm:/${self:provider.stage}/${self:service}/vpc/id~true}
     SNSTopic:
       Type: AWS::SNS::Topic
       Properties:
@@ -195,25 +189,6 @@ resources:
         DisplayName: ChiCOVIDChatEvents
         Tags:
           - Key: project
-            Value: ${self:service}-${self:provider.stage}
-    SNSVPCEndpoint:
-      Type: AWS::EC2::VPCEndpoint
-      DependsOn: SNSTopic
-      Properties:
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal: "*"
-              Action:
-                - "sns:*"
-              Resource: "*"
-        ServiceName: "com.amazonaws.${self:provider.region}.sns"
-        PrivateDnsEnabled: true
-        VpcEndpointType: Interface
-        SecurityGroupIds:
-          - ${ssm:/${self:provider.stage}/${self:service}/vpc/security-group/id~true}
-        SubnetIds:
-          - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/a~true}
-          - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/b~true}
-        VpcId: ${ssm:/${self:provider.stage}/${self:service}/vpc/id~true}
+            Value: ${self:service}
+          - Key: environment
+            Value: ${self:provider.stage}
