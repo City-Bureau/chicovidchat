@@ -44,6 +44,7 @@ package:
 plugins:
   - serverless-dotenv-plugin
   - serverless-plugin-aws-alerts
+  - serverless-prune-plugin
 
 custom:
   topicName: ${self:service}-${self:provider.stage}-events
