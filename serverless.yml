@@ -6,18 +6,18 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: us-east-2
   environment:
-    AIRTABLE_KEY: ${ssm:/${self:provider.stage}/${self:service}/airtable/key}
-    AIRTABLE_BASE: ${ssm:/${self:provider.stage}/${self:service}/airtable/base}
-    AIRTABLE_TABLE: ${ssm:/${self:provider.stage}/${self:service}/airtable/table}
-    AIRTABLE_VIEW: ${ssm:/${self:provider.stage}/${self:service}/airtable/view}
-    RDS_DB_NAME: ${ssm:/${self:provider.stage}/${self:service}/db/name}
-    RDS_USERNAME: ${ssm:/${self:provider.stage}/${self:service}/db/user}
-    RDS_PASSWORD: ${ssm:/${self:provider.stage}/${self:service}/db/password}
-    SNS_EMAIL: ${ssm:/${self:provider.stage}/${self:service}/sns/email}
-    TWILIO_FROM: ${ssm:/${self:provider.stage}/${self:service}/twilio/from}
-    TWILIO_ACCOUNT_SID: ${ssm:/${self:provider.stage}/${self:service}/twilio/account-sid}
-    TWILIO_AUTH_TOKEN: ${ssm:/${self:provider.stage}/${self:service}/twilio/auth-token}
-    SPOKE_ENDPOINT: ${ssm:/${self:provider.stage}/${self:service}/spoke/endpoint}
+    AIRTABLE_KEY: ${ssm:/${self:provider.stage}/${self:service}/airtable/key~true}
+    AIRTABLE_BASE: ${ssm:/${self:provider.stage}/${self:service}/airtable/base~true}
+    AIRTABLE_TABLE: ${ssm:/${self:provider.stage}/${self:service}/airtable/table~true}
+    AIRTABLE_VIEW: ${ssm:/${self:provider.stage}/${self:service}/airtable/view~true}
+    RDS_DB_NAME: ${ssm:/${self:provider.stage}/${self:service}/db/name~true}
+    RDS_USERNAME: ${ssm:/${self:provider.stage}/${self:service}/db/user~true}
+    RDS_PASSWORD: ${ssm:/${self:provider.stage}/${self:service}/db/password~true}
+    SNS_EMAIL: ${ssm:/${self:provider.stage}/${self:service}/sns/email~true}
+    TWILIO_FROM: ${ssm:/${self:provider.stage}/${self:service}/twilio/from~true}
+    TWILIO_ACCOUNT_SID: ${ssm:/${self:provider.stage}/${self:service}/twilio/account-sid~true}
+    TWILIO_AUTH_TOKEN: ${ssm:/${self:provider.stage}/${self:service}/twilio/auth-token~true}
+    SPOKE_ENDPOINT: ${ssm:/${self:provider.stage}/${self:service}/spoke/endpoint~true}
     S3_BUCKET: ${env:S3_BUCKET}
   tags:
     project: chicovidchat-${self:provider.stage}
@@ -48,17 +48,17 @@ plugins:
 custom:
   topicName: ${self:service}-${self:provider.stage}-events
   AURORA:
-    DB_NAME: ${ssm:/${self:provider.stage}/${self:service}/db/name}
-    USERNAME: ${ssm:/${self:provider.stage}/${self:service}/db/user}
-    PASSWORD: ${ssm:/${self:provider.stage}/${self:service}/db/password}
-    HOST: ${ssm:/${self:provider.stage}/${self:service}/db/host}
-    PORT: ${ssm:/${self:provider.stage}/${self:service}/db/port}
+    DB_NAME: ${ssm:/${self:provider.stage}/${self:service}/db/name~true}
+    USERNAME: ${ssm:/${self:provider.stage}/${self:service}/db/user~true}
+    PASSWORD: ${ssm:/${self:provider.stage}/${self:service}/db/password~true}
+    HOST: ${ssm:/${self:provider.stage}/${self:service}/db/host~true}
+    PORT: ${ssm:/${self:provider.stage}/${self:service}/db/port~true}
   vpc:
     securityGroupIds:
-      - ${ssm:/${self:provider.stage}/${self:service}/vpc/security-group/id}
+      - ${ssm:/${self:provider.stage}/${self:service}/vpc/security-group/id~true}
     subnetIds:
-      - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/a}
-      - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/b}
+      - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/a~true}
+      - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/b~true}
   alerts:
     stages:
       - prod
@@ -69,7 +69,7 @@ custom:
         topic: ${self:service}-${self:provider.stage}-alerts-alarm
         notifications:
           - protocol: email
-            endpoint: ${ssm:/${self:provider.stage}/${self:service}/sns/email}
+            endpoint: ${ssm:/${self:provider.stage}/${self:service}/sns/email~true}
   prune:
     automatic: true
     number: 3
@@ -184,9 +184,9 @@ resources:
       Type: AWS::EC2::VPCEndpoint
       Properties:
         RouteTableIds:
-          - ${ssm:/${self:provider.stage}/${self:service}/vpc/route-table/id}
+          - ${ssm:/${self:provider.stage}/${self:service}/vpc/route-table/id~true}
         ServiceName: "com.amazonaws.${self:provider.region}.s3"
-        VpcId: ${ssm:/${self:provider.stage}/${self:service}/vpc/id}
+        VpcId: ${ssm:/${self:provider.stage}/${self:service}/vpc/id~true}
     SNSTopic:
       Type: AWS::SNS::Topic
       Properties:
@@ -211,8 +211,8 @@ resources:
         PrivateDnsEnabled: true
         VpcEndpointType: Interface
         SecurityGroupIds:
-          - ${ssm:/${self:provider.stage}/${self:service}/vpc/security-group/id}
+          - ${ssm:/${self:provider.stage}/${self:service}/vpc/security-group/id~true}
         SubnetIds:
-          - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/a}
-          - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/b}
-        VpcId: ${ssm:/${self:provider.stage}/${self:service}/vpc/id}
+          - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/a~true}
+          - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/b~true}
+        VpcId: ${ssm:/${self:provider.stage}/${self:service}/vpc/id~true}
