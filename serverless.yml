@@ -18,8 +18,12 @@ provider:
     TWILIO_ACCOUNT_SID: ${ssm:/${self:provider.stage}/${self:service}/twilio/account-sid~true}
     TWILIO_AUTH_TOKEN: ${ssm:/${self:provider.stage}/${self:service}/twilio/auth-token~true}
     SPOKE_ENDPOINT: ${ssm:/${self:provider.stage}/${self:service}/spoke/endpoint~true}
-    S3_BUCKET: ${env:S3_BUCKET}
+    SENTRY_DSN: ${ssm:/${self:provider.stage}/${self:service}/sentry/dsn~true}
+    S3_BUCKET: ${ssm:/${self:provider.stage}/${self:service}/s3/bucket~true}
   tags:
+    project: ${self:service}
+    environment: ${self:provider.stage}
+  stackTags:
     project: ${self:service}
     environment: ${self:provider.stage}
   iamRoleStatements:
@@ -27,8 +31,8 @@ provider:
       Action:
         - "s3:*"
       Resource:
-        - "arn:aws:s3:::${env:S3_BUCKET}"
-        - "arn:aws:s3:::${env:S3_BUCKET}/*"
+        - "arn:aws:s3:::${ssm:/${self:provider.stage}/${self:service}/s3/bucket~true}"
+        - "arn:aws:s3:::${ssm:/${self:provider.stage}/${self:service}/s3/bucket~true}/*"
     - Effect: Allow
       Action:
         - sns:Publish
@@ -43,8 +47,6 @@ package:
     - ./i18n/**
 
 plugins:
-  - serverless-dotenv-plugin
-  - serverless-plugin-aws-alerts
   - serverless-prune-plugin
 
 custom:
@@ -61,17 +63,6 @@ custom:
     subnetIds:
       - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/a~true}
       - ${ssm:/${self:provider.stage}/${self:service}/vpc/subnet/b~true}
-  alerts:
-    stages:
-      - prod
-    alarms:
-      - functionErrors
-    topics:
-      alarm:
-        topic: ${self:service}-${self:provider.stage}-alerts-alarm
-        notifications:
-          - protocol: email
-            endpoint: ${ssm:/${self:provider.stage}/${self:service}/sns/email~true}
   prune:
     automatic: true
     number: 3
@@ -83,21 +74,15 @@ functions:
     environment:
       RDS_HOST: ${self:custom.AURORA.HOST}
       RDS_PORT: ${self:custom.AURORA.PORT}
-    alarms:
-      - functionErrors
     vpc: ${self:custom.vpc}
   load_airtable:
     handler: bin/load_airtable
     timeout: 300
-    alarms:
-      - functionErrors
     events:
       - schedule: rate(30 minutes)
   handle_twilio:
     handler: bin/handle_twilio
     timeout: 30
-    alarms:
-      - functionErrors
     environment:
       SNS_TOPIC_ARN:
         Ref: SNSTopic
@@ -117,8 +102,6 @@ functions:
     environment:
       SNS_TOPIC_ARN:
         Ref: SNSTopic
-    alarms:
-      - functionErrors
     events:
       - sns:
           arn:
@@ -135,8 +118,6 @@ functions:
       RDS_PORT: ${self:custom.AURORA.PORT}
       SNS_TOPIC_ARN:
         Ref: SNSTopic
-    alarms:
-      - functionErrors
     vpc: ${self:custom.vpc}
     events:
       - sns:
@@ -153,16 +134,12 @@ functions:
     environment:
       RDS_HOST: ${self:custom.AURORA.HOST}
       RDS_PORT: ${self:custom.AURORA.PORT}
-    alarms:
-      - functionErrors
     vpc: ${self:custom.vpc}
     events:
       - schedule: rate(12 hours)
   spoke_proxy:
     handler: bin/spoke_proxy
     timeout: 30
-    alarms:
-      - functionErrors
     vpc: ${self:custom.vpc}
     environment:
       RDS_HOST: ${self:custom.AURORA.HOST}

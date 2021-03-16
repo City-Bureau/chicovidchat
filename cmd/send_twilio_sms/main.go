@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/getsentry/sentry-go"
 	"github.com/sfreiberg/gotwilio"
 
 	"github.com/City-Bureau/chicovidchat/pkg/chat"
@@ -17,9 +18,11 @@ import (
 func SendMessage(message chat.Message, twilioChat *svc.TwilioChat, snsClient *svc.SNSClient) error {
 	twilioRes, twilioErr, sendErr := twilioChat.SendSMS(message.Body)
 	if sendErr != nil {
+		sentry.CaptureException(sendErr)
 		return sendErr
 	}
 	if twilioErr != nil {
+		sentry.CaptureException(twilioErr)
 		return fmt.Errorf("Twilio returned error code: %s", *twilioErr)
 	}
 

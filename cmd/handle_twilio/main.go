@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/schema"
 	"github.com/sfreiberg/gotwilio"
 
@@ -20,6 +21,7 @@ import (
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	values, err := url.ParseQuery(request.Body)
 	if err != nil {
+		sentry.CaptureException(err)
 		return events.APIGatewayProxyResponse{}, err
 	}
 
@@ -34,6 +36,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		values,
 	)
 	if signatureErr != nil {
+		sentry.CaptureException(signatureErr)
 		return events.APIGatewayProxyResponse{}, signatureErr
 	}
 	if !isValid {
@@ -49,6 +52,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	err = formDecoder.Decode(&smsWebhook, values)
 
 	if err != nil {
+		sentry.CaptureException(err)
 		return events.APIGatewayProxyResponse{}, err
 	}
 
@@ -66,6 +70,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	err = snsClient.Publish(string(messageJSON), os.Getenv("SNS_TOPIC_ARN"), svc.ReceivedMessageFeed)
 	if err != nil {
+		sentry.CaptureException(err)
 		return events.APIGatewayProxyResponse{}, err
 	}
 
@@ -77,5 +82,12 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 }
 
 func main() {
+	_ = sentry.Init(sentry.ClientOptions{
+		Dsn: os.Getenv("SENTRY_DSN"),
+		Transport: &sentry.HTTPSyncTransport{
+			Timeout: 5 * time.Second,
+		},
+	})
+
 	lambda.Start(handler)
 }

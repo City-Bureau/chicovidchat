@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/getsentry/sentry-go"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
@@ -37,6 +39,7 @@ func handleSentMessage(message chat.Message, conversation *chat.Conversation, db
 	var directoryChat directory.DirectoryChat
 	err := json.Unmarshal(conversation.Data.RawMessage, &directoryChat)
 	if err != nil {
+		sentry.CaptureException(err)
 		return err
 	}
 	lastMessage := directoryChat.Messages[len(directoryChat.Messages)-1]
@@ -57,6 +60,7 @@ func handler(request events.SNSEvent) error {
 	var message chat.Message
 	err := json.Unmarshal([]byte(snsRecord.Message), &message)
 	if err != nil {
+		sentry.CaptureException(err)
 		return err
 	}
 	db, dbErr := gorm.Open("postgres", fmt.Sprintf(
@@ -68,6 +72,7 @@ func handler(request events.SNSEvent) error {
 		os.Getenv("RDS_PASSWORD"),
 	))
 	if dbErr != nil {
+		sentry.CaptureException(dbErr)
 		return dbErr
 	}
 	defer db.Close()
@@ -80,6 +85,7 @@ func handler(request events.SNSEvent) error {
 			conversation, _ := directory.GetOrCreateConversationFromMessage(message.Sender, message, db)
 			replies, replyErr := handleReceivedMessage(message, conversation, db)
 			if replyErr != nil {
+				sentry.CaptureException(replyErr)
 				return replyErr
 			}
 			repliesJSON, _ := json.Marshal(replies)
@@ -98,5 +104,12 @@ func handler(request events.SNSEvent) error {
 }
 
 func main() {
+	_ = sentry.Init(sentry.ClientOptions{
+		Dsn: os.Getenv("SENTRY_DSN"),
+		Transport: &sentry.HTTPSyncTransport{
+			Timeout: 5 * time.Second,
+		},
+	})
+
 	lambda.Start(handler)
 }

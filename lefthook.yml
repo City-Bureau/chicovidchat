@@ -11,4 +11,4 @@ pre-commit:
 commit-msg:
   commands:
     commitlint:
-      run: commitlint -e -x @commitlint/config-conventional
+      run: npx commitlint -e -x @commitlint/config-conventional
