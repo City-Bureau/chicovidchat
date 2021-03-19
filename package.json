@@ -4,9 +4,7 @@
   "description": "",
   "dependencies": {},
   "devDependencies": {
-    "@arkweid/lefthook": "^0.7.1",
-    "@commitlint/cli": "^8.3.5",
-    "@commitlint/config-conventional": "^8.3.4",
-    "serverless-prune-plugin": "^1.4.3"
+    "serverless": "^2.30.3",
+    "serverless-prune-plugin": "^1.4.4"
   }
 }
