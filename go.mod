@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/aws/aws-lambda-go v1.16.0
-	github.com/aws/aws-sdk-go v1.30.3
+	github.com/aws/aws-sdk-go v1.33.0
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/gorilla/schema v1.1.0
 	github.com/jinzhu/gorm v1.9.12
